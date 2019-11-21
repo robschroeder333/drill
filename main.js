@@ -39,9 +39,14 @@ let player = {
 		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) 
 			this.velocity.x = 0
 
-		this.origin.x += this.velocity.x
-		this.origin.y += this.velocity.y
+		//temp collision
+		if (this.origin.y + this.size.y + this.velocity.y >= tHeight - cell.y) {
+			this.origin.y = (tHeight - cell.y) - this.size.y
+			this.velocity.y = Math.min(0, this.velocity.y)
+		}
 
+		this.origin.y += this.velocity.y
+		this.origin.x += this.velocity.x
 	}
 }
 
