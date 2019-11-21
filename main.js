@@ -33,13 +33,14 @@ let player = {
 	speed: 50,
 	vMax: 10,
 	move: function() {
-		this.velocity[0] = Math.clamp((this.velocity[0] + hor) * delta * this.speed, -this.vMax, this.vMax) 
-		if (hor === 0 && Math.abs(this.velocity[0]) < 0.01) this.velocity[0] = 0
-		
-		if (iUp) this.origin[1] -= 1
-		if (iDown) this.origin[1] += 1
+		const gravity = 1
+		this.velocity[0] = Math.clamp(((this.velocity[0] + hor) * delta * this.speed), -this.vMax, this.vMax) 
+		this.velocity[1] = Math.clamp(((this.velocity[1] + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
+		if (hor === 0 && Math.abs(this.velocity[0]) < 0.01) 
+			this.velocity[0] = 0
+
 		this.origin[0] += this.velocity[0]
-		//this.origin[0] += 1 //gravity
+		this.origin[1] += this.velocity[1]
 
 	}
 }
@@ -99,10 +100,10 @@ function gameStart() {
 				hor = 1
 				break;		
 			case 'ArrowUp':
-				iUp = true
+				ver = -3
 				break;		
 			case 'ArrowDown':
-				iDown = true
+				ver = 1
 				break;		
 		}
 	})
@@ -119,10 +120,10 @@ function gameStart() {
 				hor = 0
 				break;		
 			case 'ArrowUp':
-				iUp = false
+				ver = 0
 				break;		
 			case 'ArrowDown':
-				iDown = false
+				ver = 0
 				break;		
 		}
 	})
