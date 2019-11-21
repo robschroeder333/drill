@@ -25,22 +25,22 @@ let iDown
 let iFire		
 
 let cell
-let level
+let level = []
 let player = {
-	origin: [],
-	size: [20, 20],
-	velocity: [0, 0],
+	origin: {},
+	size: {x:20, y:20},
+	velocity: {x:0, y:0},
 	speed: 50,
 	vMax: 10,
 	move: function() {
 		const gravity = 1
-		this.velocity[0] = Math.clamp(((this.velocity[0] + hor) * delta * this.speed), -this.vMax, this.vMax) 
-		this.velocity[1] = Math.clamp(((this.velocity[1] + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
-		if (hor === 0 && Math.abs(this.velocity[0]) < 0.01) 
-			this.velocity[0] = 0
+		this.velocity.x = Math.clamp(((this.velocity.x + hor) * delta * this.speed), -this.vMax, this.vMax) 
+		this.velocity.y = Math.clamp(((this.velocity.y + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
+		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) 
+			this.velocity.x = 0
 
-		this.origin[0] += this.velocity[0]
-		this.origin[1] += this.velocity[1]
+		this.origin.x += this.velocity.x
+		this.origin.y += this.velocity.y
 
 	}
 }
@@ -66,19 +66,31 @@ function gameStart() {
 	tWidth -= 10
 	tHeight -= 10
 	
-	cell = [tWidth / 20, tHeight / 20]
-	player.origin = [tWidth / 2, tHeight / 2]
+	cell = {
+		x: tWidth / 20, 
+		y: tHeight / 20
+	}
+	player.origin = {
+		x: tWidth / 2, 
+		y: tHeight / 2
+	}
 
 	
 
 	for (let index = 0; index < 20; index++) {// test ground
-		ctx.save()
-		ctx.translate(cell[0] * index, tHeight - cell[1])
-		ctx.fillStyle = 'red'
-		ctx.strokeStyle = 'blue'
-		ctx.fillRect(0, 0, cell[0], cell[1])
-		ctx.strokeRect(0, 0, cell[0], cell[1])
-		ctx.restore()		
+		let row = []
+		let color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
+		for (let index = 0; index < 20; index++) {
+			let block = {
+				origin: {
+					x: cell.x * index, 
+					y: tHeight - cell.y
+				},
+				color: color
+			}
+			row.push(block)			
+		}
+		level.push(row)				
 	}
 
 	//player
@@ -136,17 +148,31 @@ function update() {
 	delta = (Date.now() - time) / 1000
 	time = Date.now()
 	player.move()
+	draw()
+	window.requestAnimationFrame(update)
+}
 
+function draw() {
 	ctx.clearRect(0, 0, tWidth, tHeight)
 	ctx.fillStyle = 'black'	
 	ctx.fillRect(0, 0, tWidth, tHeight)
-
+	
 	ctx.save()
-	ctx.translate(player.origin[0], player.origin[1])
+	ctx.translate(player.origin.x, player.origin.y)
 	ctx.fillStyle = 'green'
-	ctx.fillRect(0, 0, player.size[0], player.size[1])
+	ctx.fillRect(0, 0, player.size.x, player.size.y)
 	ctx.restore()
-	window.requestAnimationFrame(update)
+	level.forEach(row => {
+		row.forEach(block => {
+			ctx.save()
+			ctx.translate(block.origin.x, block.origin.y)
+			ctx.fillStyle = block.color
+			ctx.strokeStyle = 'blue'
+			ctx.fillRect(0, 0, cell.x, cell.y)
+			ctx.strokeRect(0, 0, cell.x, cell.y)
+			ctx.restore()
+		})
+	});
 }
 
 //utils
