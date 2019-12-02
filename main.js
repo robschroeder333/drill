@@ -34,19 +34,25 @@ let player = {
 	vMax: 10,
 	move: function() {
 		const gravity = 1
+		let startingVX
+
+		if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
+			this.velocity.x = 0
+		}
 		this.velocity.x = Math.clamp(((this.velocity.x + hor) * delta * this.speed), -this.vMax, this.vMax) 
 		this.velocity.y = Math.clamp(((this.velocity.y + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
 		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) 
 			this.velocity.x = 0
-
-		//temp collision
-		if (this.origin.y + this.size.y + this.velocity.y >= tHeight - cell.y) {
+			
+			//temp collision
+			if (this.origin.y + this.size.y + this.velocity.y >= tHeight - cell.y) {
 			this.origin.y = (tHeight - cell.y) - this.size.y
 			this.velocity.y = Math.min(0, this.velocity.y)
 		}
 
-		this.origin.y += this.velocity.y
 		this.origin.x += this.velocity.x
+		this.origin.y += this.velocity.y
+		console.log ('input = ', hor)
 	}
 }
 
@@ -111,47 +117,65 @@ function gameStart() {
 				iFire = true
 				break;
 			case 'ArrowLeft':
-				hor = -1
+				iLeft = true				
 				break;		
 			case 'ArrowRight':
-				hor = 1
+				iRight = true				
 				break;		
 			case 'ArrowUp':
-				ver = -3
+				iUp = true				
 				break;		
 			case 'ArrowDown':
-				ver = 1
+				iDown = true				
 				break;		
 		}
 	})
-
+					
 	document.addEventListener('keyup', (event) => {
 		switch (event.code) {
 			case 'Space':
 				iFire = false
 				break;
 			case 'ArrowLeft':
-				hor = 0
+				iLeft = false
 				break;		
 			case 'ArrowRight':
-				hor = 0
+				iRight = false
 				break;		
 			case 'ArrowUp':
-				ver = 0
+				iUp = false
 				break;		
 			case 'ArrowDown':
-				ver = 0
+				iDown = false
 				break;		
 		}
 	})
 	window.requestAnimationFrame(update)
 }
 
+function handleInput() {
+	if (iLeft) {
+		hor = -1
+	} else if (iRight) {
+		hor = 1
+	} else {
+		hor = 0
+	}
+
+	if (iUp) {
+		ver = -3
+	} else if (iDown) {
+		ver = 1
+	} else {
+		ver = 0
+	}
+}
 
 let time = Date.now()
 function update() {
 	delta = (Date.now() - time) / 1000
 	time = Date.now()
+	handleInput()
 	player.move()
 	draw()
 	window.requestAnimationFrame(update)
