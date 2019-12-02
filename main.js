@@ -34,7 +34,6 @@ let player = {
 	vMax: 10,
 	move: function() {
 		const gravity = 1
-		let startingVX
 
 		if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
 			this.velocity.x = 0
@@ -52,7 +51,6 @@ let player = {
 
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
-		console.log ('input = ', hor)
 	}
 }
 
