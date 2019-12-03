@@ -25,7 +25,10 @@ let iDown
 let iFire		
 
 let cell
-let level = []
+let level = {
+	origin: {}, 
+	cells: []
+}
 let player = {
 	origin: {},
 	size: {x:20, y:20},
@@ -84,12 +87,13 @@ function gameStart() {
 		y: tHeight / 2
 	}
 
+	level.origin = {x: -50, y: 0}
 	
 
 	for (let index = 0; index < 20; index++) {// test ground
 		let row = []
 		let color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
-		for (let index = 0; index < 20; index++) {
+		for (let index = 0; index < 40; index++) {
 			let block = {
 				origin: {
 					x: cell.x * index, 
@@ -99,7 +103,7 @@ function gameStart() {
 			}
 			row.push(block)			
 		}
-		level.push(row)				
+		level.cells.push(row)				
 	}
 
 	//player
@@ -151,6 +155,41 @@ function gameStart() {
 	window.requestAnimationFrame(update)
 }
 
+
+let time = Date.now()
+function update() {
+	delta = (Date.now() - time) / 1000
+	time = Date.now()
+	handleInput()
+	player.move()
+	camera()
+	draw()
+	window.requestAnimationFrame(update)
+}
+
+function draw() {
+	ctx.clearRect(0, 0, tWidth, tHeight)
+	ctx.fillStyle = 'black'	
+	ctx.fillRect(0, 0, tWidth, tHeight)
+	
+	ctx.save()
+	ctx.translate(player.origin.x, player.origin.y)
+	ctx.fillStyle = 'green'
+	ctx.fillRect(0, 0, player.size.x, player.size.y)
+	ctx.restore()
+	level.cells.forEach(row => {
+		row.forEach(block => {
+			ctx.save()
+			ctx.translate(block.origin.x + level.origin.x, block.origin.y + level.origin.y)
+			ctx.fillStyle = block.color
+			ctx.strokeStyle = 'blue'
+			ctx.fillRect(0, 0, cell.x, cell.y)
+			ctx.strokeRect(0, 0, cell.x, cell.y)
+			ctx.restore()
+		})
+	});
+}
+
 function handleInput() {
 	if (iLeft) {
 		hor = -1
@@ -169,37 +208,16 @@ function handleInput() {
 	}
 }
 
-let time = Date.now()
-function update() {
-	delta = (Date.now() - time) / 1000
-	time = Date.now()
-	handleInput()
-	player.move()
-	draw()
-	window.requestAnimationFrame(update)
-}
-
-function draw() {
-	ctx.clearRect(0, 0, tWidth, tHeight)
-	ctx.fillStyle = 'black'	
-	ctx.fillRect(0, 0, tWidth, tHeight)
-	
-	ctx.save()
-	ctx.translate(player.origin.x, player.origin.y)
-	ctx.fillStyle = 'green'
-	ctx.fillRect(0, 0, player.size.x, player.size.y)
-	ctx.restore()
-	level.forEach(row => {
-		row.forEach(block => {
-			ctx.save()
-			ctx.translate(block.origin.x, block.origin.y)
-			ctx.fillStyle = block.color
-			ctx.strokeStyle = 'blue'
-			ctx.fillRect(0, 0, cell.x, cell.y)
-			ctx.strokeRect(0, 0, cell.x, cell.y)
-			ctx.restore()
-		})
-	});
+function camera() {
+	const borderL = cell.x * 3
+	const borderR = tWidth - borderL
+	if (player.origin.x < borderL) {
+		level.origin.x += borderL - player.origin.x
+		player.origin.x = borderL
+	} else if (player.origin.x > borderR) {
+		level.origin.x -= player.origin.x - borderR
+		player.origin.x =  borderR
+	}
 }
 
 //utils
