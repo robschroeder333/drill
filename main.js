@@ -167,19 +167,20 @@ function gameStart() {
 				break;		
 		}
 	})
-	window.requestAnimationFrame(update)
+	update()
 }
 
 
 let time = Date.now()
 function update() {
-	delta = (Date.now() - time) / 1000
-	time = Date.now()
-	handleInput()
-	player.move()
-	camera()
-	draw()
-	window.requestAnimationFrame(update)
+	setInterval(() => {
+		delta = (Date.now() - time) / 1000
+		time = Date.now()
+		handleInput()
+		player.move()
+		camera()
+		draw()		
+	}, 1000/30);
 }
 
 function draw() {
