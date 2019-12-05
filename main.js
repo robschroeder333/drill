@@ -16,6 +16,7 @@ let delta
 
 let tWidth
 let tHeight
+let topLeftBorder
 let iLeft
 let iRight
 let hor
@@ -38,34 +39,65 @@ let player = {
 	move: function() {
 		const gravity = 1
 
+		this.velocity.x = Math.clamp(((this.velocity.x + hor) * delta * this.speed), -this.vMax, this.vMax) 
+		this.velocity.y = Math.clamp(((this.velocity.y + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
+		
 		//adds responsiveness to controls
 		if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
 			this.velocity.x = 0
 		}
-
-		this.velocity.x = Math.clamp(((this.velocity.x + hor) * delta * this.speed), -this.vMax, this.vMax) 
-		this.velocity.y = Math.clamp(((this.velocity.y + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
-		
-		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) 
+		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) {
 			this.velocity.x = 0
-		
-		//vertical collision (down)
-		let nextY = this.origin.y + this.size.y + this.velocity.y
-		let checkRow = -1
-		level.rows.forEach((ele, i) => {
-			if (nextY >= i * cell.y + level.origin.y && nextY < (i + 1) * cell.y + level.origin.y) 
-				checkRow = i
-		});
+		}
+	
+		let nextX
+		let nextY
+		let checkRow
 
-		if (checkRow != -1) {
-			level.rows[checkRow].forEach(ele => {
-				if (((this.origin.x >= ele.origin.x + level.origin.x) && (this.origin.x < ele.origin.x + level.origin.x + cell.x)) 
-					|| ((this.origin.x + this.size.x >= ele.origin.x + level.origin.x) && (this.origin.x + this.size.x < ele.origin.x + level.origin.x + cell.x))){
-					this.origin.y = (ele.origin.y + level.origin.y) - this.size.y
+		//collision down
+		if (this.velocity.y >= 0) {
+			nextY = this.origin.y + this.size.y + this.velocity.y
+			checkRow = Math.floor((nextY - level.origin.y) / cell.y)
+			if (checkRow >= 0 && checkRow !== undefined){
+				let left = this.origin.x + this.velocity.x
+				let right = this.origin.x + this.size.x + this.velocity.x
+	
+				let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
+				let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
+				if (blockL) {
+					this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
+					this.velocity.y = Math.min(0, this.velocity.y)
+				} else if (blockR) {
+					this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
 					this.velocity.y = Math.min(0, this.velocity.y)
 				}
-			})
+			}
+		} else {
+			nextY = this.origin.y + this.velocity.y
+			checkRow = Math.floor((nextY - level.origin.y) / cell.y)
+			if (checkRow >= 0 && checkRow !== undefined){
+				let left = this.origin.x + this.velocity.x
+				let right = this.origin.x + this.size.x + this.velocity.x
+	
+				let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
+				let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
+				if (blockL) {
+					this.origin.y = (blockL.origin.y + cell.y + level.origin.y)
+					this.velocity.y = Math.max(0, this.velocity.y)
+				} else if (blockR) {
+					this.origin.y = (blockR.origin.y + cell.y + level.origin.y)
+					this.velocity.y = Math.max(0, this.velocity.y)
+				}
+			}
+		} 
+
+		if (this.velocity.x >= 0) {
+
+		} else {
+
 		}
+		
+
 
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
@@ -90,8 +122,9 @@ function gameStart() {
 	ctx.save()
 
 	//adjust total dimensions for translation offset
-	tWidth -= 10
-	tHeight -= 10
+	topLeftBorder = 10
+	tWidth -= topLeftBorder
+	tHeight -= topLeftBorder
 	
 	cell = {
 		x: tWidth / 20, 
@@ -116,6 +149,11 @@ function gameStart() {
 				},
 				color: color
 			}
+			if (rowI === 0 && blockI === 15)
+				block = null
+
+			if (rowI > 3 && rowI < 7)
+				block = null
 			row.push(block)			
 		}
 		level.rows.push(row)				
@@ -146,7 +184,7 @@ function gameStart() {
 				iDown = true				
 				break;		
 		}
-	})
+	}, false)
 					
 	document.addEventListener('keyup', (event) => {
 		switch (event.code) {
@@ -166,25 +204,24 @@ function gameStart() {
 				iDown = false
 				break;		
 		}
-	})
-	update()
+	}, false)
+	window.requestAnimationFrame(update)
 }
 
 
 let time = Date.now()
 function update() {
-	setInterval(() => {
-		delta = (Date.now() - time) / 1000
-		time = Date.now()
-		handleInput()
-		player.move()
-		camera()
-		draw()		
-	}, 1000/30);
+	delta = (Date.now() - time) / 1000
+	time = Date.now()
+	handleInput()
+	player.move()
+	camera()
+	draw()	
+	window.requestAnimationFrame(update)
 }
 
 function draw() {
-	ctx.clearRect(0, 0, tWidth, tHeight)
+	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth, tHeight)
 	ctx.fillStyle = 'black'	
 	ctx.fillRect(0, 0, tWidth, tHeight)
 	
@@ -195,13 +232,15 @@ function draw() {
 	ctx.restore()
 	level.rows.forEach(row => {
 		row.forEach(block => {
-			ctx.save()
-			ctx.translate(block.origin.x + level.origin.x, block.origin.y + level.origin.y)
-			ctx.fillStyle = block.color
-			ctx.strokeStyle = 'blue'
-			ctx.fillRect(0, 0, cell.x, cell.y)
-			ctx.strokeRect(0, 0, cell.x, cell.y)
-			ctx.restore()
+			if (block) {
+				ctx.save()
+				ctx.translate(block.origin.x + level.origin.x, block.origin.y + level.origin.y)
+				ctx.fillStyle = block.color
+				ctx.strokeStyle = 'blue'
+				ctx.fillRect(0, 0, cell.x, cell.y)
+				ctx.strokeRect(0, 0, cell.x, cell.y)
+				ctx.restore()
+			}
 		})
 	});
 }
@@ -218,7 +257,7 @@ function handleInput() {
 	if (iUp) {
 		ver = -3
 	} else if (iDown) {
-		ver = 1
+		ver = 2
 	} else {
 		ver = 0
 	}
