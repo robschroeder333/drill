@@ -26,10 +26,12 @@ let iDown
 let iFire		
 
 let cell
+
 let level = {
 	origin: {}, 
 	rows: []
 }
+
 let player = {
 	origin: {},
 	size: {x:20, y:20},
@@ -59,7 +61,7 @@ let player = {
 		if (this.velocity.y > 0) {
 			nextY = this.origin.y + this.size.y + this.velocity.y
 			checkRow = Math.floor((nextY - level.origin.y) / cell.y)
-			if (checkRow >= 0 && checkRow !== undefined){
+			if (checkRow >= 0 && checkRow !== undefined) {
 				let left = this.origin.x + this.velocity.x
 				let right = this.origin.x + this.size.x + this.velocity.x
 				let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
@@ -76,7 +78,7 @@ let player = {
 		} else if (this.velocity.y < 0) {
 			nextY = this.origin.y + this.velocity.y
 			checkRow = Math.floor((nextY - level.origin.y) / cell.y)
-			if (checkRow >= 0 && checkRow !== undefined){
+			if (checkRow >= 0 && checkRow !== undefined) {
 				let left = this.origin.x + this.velocity.x
 				let right = this.origin.x + this.size.x + this.velocity.x
 				let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
@@ -129,8 +131,6 @@ let player = {
 				}
 			}
 		}
-		
-
 
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
