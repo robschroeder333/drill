@@ -36,13 +36,13 @@ let player = {
 	origin: {},
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
-	speed: 50,
+	speed: 500,
 	vMax: 10,
 	move: function() {
-		const gravity = 1
-
-		this.velocity.x = Math.clamp(((this.velocity.x + hor) * delta * this.speed), -this.vMax, this.vMax) 
-		this.velocity.y = Math.clamp(((this.velocity.y + ver + gravity) * delta * this.speed), -this.vMax, this.vMax) 
+		const gravity = 1000
+		
+		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.speed)) * delta, -this.vMax, this.vMax)
+		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.speed) + gravity) * delta), -this.vMax, this.vMax) 
 		
 		//adds responsiveness to controls
 		if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
