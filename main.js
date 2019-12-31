@@ -26,6 +26,8 @@ let iDown
 let iFire		
 
 let cell
+let levelWidth
+let levelHeight
 
 let level = {
 	origin: {}, 
@@ -34,14 +36,14 @@ let level = {
 
 		let color
 		let layer = 0
-		for (let rowI = 0; rowI < 100; rowI++) {
+		for (let rowI = 0; rowI < levelHeight; rowI++) {
 			let row = []
 
 			if (rowI % 10 === 0) {
 				color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
 				layer++
 			}
-			for (let blockI = 0; blockI < 50; blockI++) {
+			for (let blockI = 0; blockI < levelWidth; blockI++) {
 				let block = {}
 				if (rowI < 10) {
 					block = null
@@ -186,11 +188,12 @@ function gameStart() {
 	canvas.width = tWidth
 	canvas.height = tHeight
 	
-	ctx.translate(10, 10)
-	ctx.save()
-
 	//adjust total dimensions for translation offset
 	topLeftBorder = 10
+	
+	ctx.translate(topLeftBorder, topLeftBorder)
+	ctx.save()
+
 	tWidth -= topLeftBorder
 	tHeight -= topLeftBorder
 	
@@ -203,13 +206,14 @@ function gameStart() {
 		x: tWidth / 2, 
 		y: cell.y * 5
 	}
-	
+	levelHeight = 100
+	levelWidth = 50
+
 	level.generate()
 	level.origin = {
 		x: -Math.floor(level.rows[0].length / 2) * cell.x, 
 		y: 0
 	}
-	// level.origin = {x:0, y:0}
 	
 
 
@@ -285,10 +289,11 @@ function draw() {
 	ctx.fillRect(0, 0, player.size.x, player.size.y)
 	ctx.restore()
 
-	let topRow = Math.floor(level.origin.y / cell.y)
-	let leftCell = -Math.floor(level.origin.x / cell.x)
-	let bottomRow = topRow * division.y
-	let rightCell = leftCell * division.x
+	//Draw level with frustum culling
+	let topRow = Math.clamp(-Math.ceil(level.origin.y / cell.y), 0, levelHeight)
+	let leftCell = Math.clamp(-Math.ceil(level.origin.x / cell.x), 0, levelWidth)
+	let bottomRow = Math.clamp(topRow + division.y, 0, levelHeight)
+	let rightCell = Math.clamp(leftCell + division.x, 0, levelWidth)
 	for (let rowI = topRow; rowI <= bottomRow; rowI++) {
 		for (let blockI = leftCell; blockI <= rightCell; blockI++) {
 			let block = level.rows[rowI][blockI]
@@ -303,6 +308,8 @@ function draw() {
 			}	
 		}
 	}
+	ctx.clearRect(-topLeftBorder, -topLeftBorder, topLeftBorder, tHeight + topLeftBorder)
+	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth + topLeftBorder, topLeftBorder)
 }
 
 function handleInput() {
@@ -333,14 +340,14 @@ function camera() {
 		player.origin.x = borderNearW
 	} else if (player.origin.x > borderFarW) {
 		level.origin.x -= player.origin.x - borderFarW
-		player.origin.x =  borderFarW
+		player.origin.x = borderFarW
 	}
 	if (player.origin.y < borderNearH) {
 		level.origin.y += borderNearH - player.origin.y
 		player.origin.y = borderNearH
 	} else if (player.origin.y > borderFarH) {
 		level.origin.y -= player.origin.y - borderFarH
-		player.origin.y =  borderFarH
+		player.origin.y = borderFarH
 	}
 }
 
