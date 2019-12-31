@@ -26,10 +26,47 @@ let iDown
 let iFire		
 
 let cell
+let levelWidth
+let levelHeight
 
 let level = {
 	origin: {}, 
-	rows: []
+	rows: [],
+	generate: function() {
+
+		let color
+		let layer = 0
+		for (let rowI = 0; rowI < levelHeight; rowI++) {
+			let row = []
+
+			if (rowI % 10 === 0) {
+				color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
+				layer++
+			}
+			for (let blockI = 0; blockI < levelWidth; blockI++) {
+				let block = {}
+				if (rowI < 10) {
+					block = null
+				} else {
+					let rnd = Math.random() * 100
+					if (rnd >= layer * 2 + 10) {
+						block =	{
+							origin: {
+								x: cell.x * blockI, 
+								y: cell.y * rowI
+							},
+							color: color
+						}
+					} else {
+						block = null
+					}
+				}
+	
+				row.push(block)			
+			}
+			level.rows.push(row)				
+		}
+	}
 }
 
 let player = {
@@ -151,46 +188,34 @@ function gameStart() {
 	canvas.width = tWidth
 	canvas.height = tHeight
 	
-	ctx.translate(10, 10)
-	ctx.save()
-
 	//adjust total dimensions for translation offset
 	topLeftBorder = 10
+	
+	ctx.translate(topLeftBorder, topLeftBorder)
+	ctx.save()
+
 	tWidth -= topLeftBorder
 	tHeight -= topLeftBorder
 	
+	division = {x: 20, y: 20}
 	cell = {
-		x: tWidth / 20, 
-		y: tHeight / 20
+		x: tWidth / division.x, 
+		y: tHeight / division.y
 	}
 	player.origin = {
 		x: tWidth / 2, 
-		y: tHeight / 2
+		y: cell.y * 5
 	}
+	levelHeight = 100
+	levelWidth = 50
 
-	level.origin = {x: -50, y: tHeight}
+	level.generate()
+	level.origin = {
+		x: -Math.floor(level.rows[0].length / 2) * cell.x, 
+		y: 0
+	}
 	
 
-	for (let rowI = 0; rowI < 20; rowI++) {// test ground
-		let row = []
-		let color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`
-		for (let blockI = 0; blockI < 40; blockI++) {
-			let block = {
-				origin: {
-					x: cell.x * blockI, 
-					y: cell.y * rowI
-				},
-				color: color
-			}
-			if (rowI === 0 && blockI > 3 && blockI < 18)
-				block = null
-
-			if (rowI > 3 && rowI < 7)
-				block = null
-			row.push(block)			
-		}
-		level.rows.push(row)				
-	}
 
 	//player
 	iLeft = false
@@ -263,8 +288,15 @@ function draw() {
 	ctx.fillStyle = 'green'
 	ctx.fillRect(0, 0, player.size.x, player.size.y)
 	ctx.restore()
-	level.rows.forEach(row => {
-		row.forEach(block => {
+
+	//Draw level with frustum culling
+	let topRow = Math.clamp(-Math.ceil(level.origin.y / cell.y), 0, levelHeight)
+	let leftCell = Math.clamp(-Math.ceil(level.origin.x / cell.x), 0, levelWidth)
+	let bottomRow = Math.clamp(topRow + division.y, 0, levelHeight)
+	let rightCell = Math.clamp(leftCell + division.x, 0, levelWidth)
+	for (let rowI = topRow; rowI <= bottomRow; rowI++) {
+		for (let blockI = leftCell; blockI <= rightCell; blockI++) {
+			let block = level.rows[rowI][blockI]
 			if (block) {
 				ctx.save()
 				ctx.translate(block.origin.x + level.origin.x, block.origin.y + level.origin.y)
@@ -273,9 +305,11 @@ function draw() {
 				ctx.fillRect(0, 0, cell.x, cell.y)
 				ctx.strokeRect(0, 0, cell.x, cell.y)
 				ctx.restore()
-			}
-		})
-	});
+			}	
+		}
+	}
+	ctx.clearRect(-topLeftBorder, -topLeftBorder, topLeftBorder, tHeight + topLeftBorder)
+	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth + topLeftBorder, topLeftBorder)
 }
 
 function handleInput() {
@@ -306,14 +340,14 @@ function camera() {
 		player.origin.x = borderNearW
 	} else if (player.origin.x > borderFarW) {
 		level.origin.x -= player.origin.x - borderFarW
-		player.origin.x =  borderFarW
+		player.origin.x = borderFarW
 	}
 	if (player.origin.y < borderNearH) {
 		level.origin.y += borderNearH - player.origin.y
 		player.origin.y = borderNearH
 	} else if (player.origin.y > borderFarH) {
 		level.origin.y -= player.origin.y - borderFarH
-		player.origin.y =  borderFarH
+		player.origin.y = borderFarH
 	}
 }
 
