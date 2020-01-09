@@ -74,12 +74,15 @@ let player = {
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
 	speed: 500,
-	vMax: 10,
+	hSpeed: 50,
+	vSpeed: 50,
+	g: 100,
+	hMax: 10,
+	vMax: 20,
 	jumpStrength: 0,
 	jAllowance: 0,
 	isGrounded: false,
 	move: function() {
-		const gravity = 1000
 
 		//buffer for delayed jump input
 		if (!iUp) {
@@ -105,15 +108,21 @@ let player = {
 			}
 		}
 
-		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.speed)) * delta, -this.vMax, this.vMax)
-		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.speed) + gravity) * delta), -this.vMax, this.vMax) 
+		this.hSpeed = Math.clamp(this.hSpeed + 20, 10, this.speed)
+		this.vSpeed = Math.clamp(this.vSpeed + 20, 10, this.speed)
+		this.g = Math.clamp(this.g * 2, 100, 1000)
+		//next position (before collision)
+		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.hSpeed)) * delta, -this.hMax, this.hMax)
+		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.vSpeed) + this.g) * delta), -this.vMax, this.vMax) 
 		
 		//adds responsiveness to controls
 		if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
 			this.velocity.x = 0
+			this.hSpeed = 50
 		}
 		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) {
 			this.velocity.x = 0
+			this.hSpeed = 50
 		}
 	
 		let nextX
@@ -173,10 +182,12 @@ let player = {
 					this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
 					this.velocity.y = Math.min(0, this.velocity.y)
 					this.isGrounded = true
+					this.g = 100
 				} else if (blockR) {
 					this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
 					this.velocity.y = Math.min(0, this.velocity.y)
 					this.isGrounded = true
+					this.g = 100
 				} else {
 					this.isGrounded = false
 				}
