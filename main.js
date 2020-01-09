@@ -75,9 +75,36 @@ let player = {
 	velocity: {x:0, y:0},
 	speed: 500,
 	vMax: 10,
+	jumpStrength: 0,
+	jAllowance: 0,
+	isGrounded: false,
 	move: function() {
 		const gravity = 1000
-		
+
+		//buffer for delayed jump input
+		if (!iUp) {
+			if (this.isGrounded) {
+				this.jumpStrength = 20
+				this.jAllowance = 1
+			} else {
+				if (this.jAllowance > 0) {
+					this.jumpStrength = 20	
+					this.jAllowance--				
+				} else {
+					this.jumpStrength = 0
+				}
+			}
+		}
+
+		//limiter for held jump
+		if (ver < 0) {
+			if (this.jumpStrength > 0) {
+				this.jumpStrength--
+			} else {
+				ver = 0
+			}
+		}
+
 		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.speed)) * delta, -this.vMax, this.vMax)
 		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.speed) + gravity) * delta), -this.vMax, this.vMax) 
 		
@@ -145,9 +172,13 @@ let player = {
 				if (blockL) {
 					this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
 					this.velocity.y = Math.min(0, this.velocity.y)
+					this.isGrounded = true
 				} else if (blockR) {
 					this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
 					this.velocity.y = Math.min(0, this.velocity.y)
+					this.isGrounded = true
+				} else {
+					this.isGrounded = false
 				}
 			}
 		//collision up
