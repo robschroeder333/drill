@@ -111,6 +111,7 @@ let player = {
 		this.hSpeed = Math.clamp(this.hSpeed + 20, 10, this.speed)
 		this.vSpeed = Math.clamp(this.vSpeed + 20, 10, this.speed)
 		this.g = Math.clamp(this.g * 2, 100, 1000)
+		
 		//next position (before collision)
 		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.hSpeed)) * delta, -this.hMax, this.hMax)
 		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.vSpeed) + this.g) * delta), -this.vMax, this.vMax) 
@@ -133,84 +134,99 @@ let player = {
 		//collision right
 		if (this.velocity.x > 0) {
 			nextX = this.origin.x + this.size.x + this.velocity.x
-			checkBlock = Math.floor((nextX - level.origin.x) / cell.x)
-			if (checkBlock >= 0 && checkBlock !== undefined) {
-				let top = this.origin.y + 1
-				let bottom = this.origin.y + this.size.y - 1
-				let blockTRow = level.rows[Math.floor((top - level.origin.y) / cell.y)]
-				let blockT = blockTRow !== undefined ? blockTRow[checkBlock] : null
-				let blockBRow = level.rows[Math.floor((bottom - level.origin.y) / cell.y)]
-				let blockB = blockBRow !== undefined ? blockBRow[checkBlock] : null
-				if (blockT) {
-					this.origin.x = (blockT.origin.x + level.origin.x) - (this.size.x + 1)
-					this.velocity.x = Math.min(0, this.velocity.x)
-				} else if (blockB) {
-					this.origin.x = (blockB.origin.x + level.origin.x) - (this.size.x + 1)
-					this.velocity.x = Math.min(0, this.velocity.x)
+			if (nextX - level.origin.x > cell.x * levelWidth) {
+				this.velocity.x = Math.min(0, this.velocity.x)
+			} else {
+				checkBlock = Math.floor((nextX - level.origin.x) / cell.x)
+				if (checkBlock >= 0 && checkBlock !== undefined) {
+					let top = this.origin.y + 1
+					let bottom = this.origin.y + this.size.y - 1
+					let blockTRow = level.rows[Math.floor((top - level.origin.y) / cell.y)]
+					let blockT = blockTRow !== undefined ? blockTRow[checkBlock] : null
+					let blockBRow = level.rows[Math.floor((bottom - level.origin.y) / cell.y)]
+					let blockB = blockBRow !== undefined ? blockBRow[checkBlock] : null
+					if (blockT) {
+						this.origin.x = (blockT.origin.x + level.origin.x) - (this.size.x + 1)
+						this.velocity.x = Math.min(0, this.velocity.x)
+					} else if (blockB) {
+						this.origin.x = (blockB.origin.x + level.origin.x) - (this.size.x + 1)
+						this.velocity.x = Math.min(0, this.velocity.x)
+					}
 				}
 			}
 		//collision left
 		} else if (this.velocity.x < 0) {
 			nextX = this.origin.x + this.velocity.x
-			checkBlock = Math.floor((nextX - level.origin.x) / cell.x)
-			if (checkBlock >= 0 && checkBlock !== undefined) {
-				let top = this.origin.y + 1
-				let bottom = this.origin.y + this.size.y - 1
-				let blockTRow = level.rows[Math.floor((top - level.origin.y) / cell.y)]
-				let blockT = blockTRow !== undefined ? blockTRow[checkBlock] : null
-				let blockBRow = level.rows[Math.floor((bottom - level.origin.y) / cell.y)]
-				let blockB = blockBRow !== undefined ? blockBRow[checkBlock] : null
-				if (blockT) {
-					this.origin.x = blockT.origin.x + level.origin.x + cell.x + 1
-					this.velocity.x = Math.max(0, this.velocity.x)
-				} else if (blockB) {
-					this.origin.x = blockB.origin.x + level.origin.x + cell.x + 1
-					this.velocity.x = Math.max(0, this.velocity.x)
+			if (nextX - level.origin.x < 0) {
+				this.velocity.x = Math.max(0, this.velocity.x)
+			} else {
+				checkBlock = Math.floor((nextX - level.origin.x) / cell.x)
+				if (checkBlock >= 0 && checkBlock !== undefined) {
+					let top = this.origin.y + 1
+					let bottom = this.origin.y + this.size.y - 1
+					let blockTRow = level.rows[Math.floor((top - level.origin.y) / cell.y)]
+					let blockT = blockTRow !== undefined ? blockTRow[checkBlock] : null
+					let blockBRow = level.rows[Math.floor((bottom - level.origin.y) / cell.y)]
+					let blockB = blockBRow !== undefined ? blockBRow[checkBlock] : null
+					if (blockT) {
+						this.origin.x = blockT.origin.x + level.origin.x + cell.x + 1
+						this.velocity.x = Math.max(0, this.velocity.x)
+					} else if (blockB) {
+						this.origin.x = blockB.origin.x + level.origin.x + cell.x + 1
+						this.velocity.x = Math.max(0, this.velocity.x)
+					}
 				}
-			}
+			} 
 		}
 		//collision down
 		if (this.velocity.y > 0) {
 			nextY = this.origin.y + this.size.y + this.velocity.y
-			checkRow = Math.floor((nextY - level.origin.y) / cell.y)
-			if (checkRow >= 0 && checkRow !== undefined) {
-				let left = this.origin.x + this.velocity.x
-				let right = this.origin.x + this.size.x + this.velocity.x
-				let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
-				let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
-				if (blockL) {
-					this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
-					this.velocity.y = Math.min(0, this.velocity.y)
-					this.isGrounded = true
-					this.g = 100
-				} else if (blockR) {
-					this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
-					this.velocity.y = Math.min(0, this.velocity.y)
-					this.isGrounded = true
-					this.g = 100
-				} else {
-					this.isGrounded = false
+			if (nextY - level.origin.y > cell.y * levelHeight) {
+				this.velocity.y = Math.min(0, this.velocity.y)
+			} else {
+				checkRow = Math.floor((nextY - level.origin.y) / cell.y)
+				if (checkRow >= 0 && checkRow !== undefined) {
+					let left = this.origin.x + this.velocity.x
+					let right = this.origin.x + this.size.x + this.velocity.x
+					let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
+					let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
+					if (blockL) {
+						this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
+						this.velocity.y = Math.min(0, this.velocity.y)
+						this.isGrounded = true
+						this.g = 100
+					} else if (blockR) {
+						this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
+						this.velocity.y = Math.min(0, this.velocity.y)
+						this.isGrounded = true
+						this.g = 100
+					} else {
+						this.isGrounded = false
+					}
 				}
 			}
 		//collision up
 		} else if (this.velocity.y < 0) {
 			nextY = this.origin.y + this.velocity.y
-			checkRow = Math.floor((nextY - level.origin.y) / cell.y)
-			if (checkRow >= 0 && checkRow !== undefined) {
-				let left = this.origin.x + this.velocity.x
-				let right = this.origin.x + this.size.x + this.velocity.x
-				let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
-				let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
-				if (blockL) {
-					this.origin.y = blockL.origin.y + cell.y + level.origin.y
-					this.velocity.y = Math.max(0, this.velocity.y)
-				} else if (blockR) {
-					this.origin.y = blockR.origin.y + cell.y + level.origin.y
-					this.velocity.y = Math.max(0, this.velocity.y)
+			if (nextY - level.origin.y < 0) {
+				this.velocity.y = Math.max(0, this.velocity.y)
+			} else {
+				checkRow = Math.floor((nextY - level.origin.y) / cell.y)
+				if (checkRow >= 0 && checkRow !== undefined) {
+					let left = this.origin.x + this.velocity.x
+					let right = this.origin.x + this.size.x + this.velocity.x
+					let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
+					let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
+					if (blockL) {
+						this.origin.y = blockL.origin.y + cell.y + level.origin.y
+						this.velocity.y = Math.max(0, this.velocity.y)
+					} else if (blockR) {
+						this.origin.y = blockR.origin.y + cell.y + level.origin.y
+						this.velocity.y = Math.max(0, this.velocity.y)
+					}
 				}
 			}
 		} 
-
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
 	}
