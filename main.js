@@ -82,7 +82,16 @@ let player = {
 	jumpStrength: 0,
 	jAllowance: 0,
 	isGrounded: false,
+	drill: false,
+	drillCount: 3,
+	drillStrength: 3,
 	move: function() {
+
+		if (!this.isGrounded && iDown && this.drillCount > 0) {
+			this.drill = true
+		} else {
+			this.drill = false
+		}
 
 		//buffer for delayed jump input
 		if (!iUp) {
@@ -102,6 +111,7 @@ let player = {
 		//limiter for held jump
 		if (ver < 0) {
 			if (this.jumpStrength > 0) {
+				this.drillCount = this.drillStrength
 				this.jumpStrength--
 			} else {
 				ver = 0
@@ -190,18 +200,34 @@ let player = {
 					let right = this.origin.x + this.size.x + this.velocity.x
 					let blockL = level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)]
 					let blockR = level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)]
+					let drilled = false
 					if (blockL) {
-						this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
-						this.velocity.y = Math.min(0, this.velocity.y)
-						this.isGrounded = true
-						this.g = 100
-					} else if (blockR) {
-						this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
-						this.velocity.y = Math.min(0, this.velocity.y)
-						this.isGrounded = true
-						this.g = 100
-					} else {
+						if (!this.drill) {
+							this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
+							this.velocity.y = Math.min(0, this.velocity.y)
+							this.isGrounded = true
+							this.g = 100
+						} else {
+							level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)] = null
+							drilled = true							
+						}
+					}
+					if (blockR) {
+						if (!this.drill) {
+							this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
+							this.velocity.y = Math.min(0, this.velocity.y)
+							this.isGrounded = true
+							this.g = 100
+						} else {
+							level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)] = null
+							drilled = true
+						}
+					} 
+					if (!blockR && !blockL) {
 						this.isGrounded = false
+					}
+					if (drilled) {
+						this.drillCount--
 					}
 				}
 			}
