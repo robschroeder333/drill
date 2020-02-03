@@ -19,10 +19,10 @@ let tHeight
 let topLeftBorder
 let iLeft
 let iRight
-let hor
-let ver
 let iUp
 let iDown	
+let hor
+let ver
 let iFire		
 
 let cell
@@ -45,7 +45,7 @@ let level = {
 			}
 			for (let blockI = 0; blockI < levelWidth; blockI++) {
 				let block = {}
-				if (rowI < 10) {
+				if (rowI < 6) {
 					block = null
 				} else {
 					let rnd = Math.random() * 100
@@ -262,7 +262,7 @@ function gameStart() {
 	}
 	player.origin = {
 		x: tWidth / 2, 
-		y: cell.y * 5
+		y: cell.y * 3
 	}
 	levelHeight = 100
 	levelWidth = 50
@@ -388,30 +388,48 @@ function handleInput() {
 	}
 }
 
+//test vertical checks
 function camera() {
 	const borderNearW = cell.x * 3
 	const borderNearH = cell.y * 7
 	const borderFarW = tWidth - borderNearW
-	const borderFarH = tHeight - borderNearH
+	const borderFarH = tHeight - borderNearH	
+
+	//horizontal
 	if (player.origin.x < borderNearW) {
-		level.origin.x += borderNearW - player.origin.x
-		player.origin.x = borderNearW
+		//prevent camera from seeing past left edge of level
+		if (borderNearW - player.origin.x + level.origin.x < 0) {
+			//move level right and keep player in place
+			level.origin.x += borderNearW - player.origin.x
+			player.origin.x = borderNearW
+		}
+		
 	} else if (player.origin.x > borderFarW) {
-		level.origin.x -= player.origin.x - borderFarW
-		player.origin.x = borderFarW
+		//prevent camera from seeing past right edge of level
+		if (level.origin.x - (player.origin.x - borderFarW) > -(levelWidth * cell.x - tWidth)) {
+			//move level left and keep player in place
+			level.origin.x -= (player.origin.x) - borderFarW
+			player.origin.x = borderFarW
+		}
 	}
+
+	//vertical
 	if (player.origin.y < borderNearH) {
-		level.origin.y += borderNearH - player.origin.y
-		player.origin.y = borderNearH
+		if (borderNearH - player.origin.y + level.origin.y < 0) {
+			//move level down and keep player in place
+			level.origin.y += borderNearH - player.origin.y
+			player.origin.y = borderNearH
+		}
 	} else if (player.origin.y > borderFarH) {
-		level.origin.y -= player.origin.y - borderFarH
-		player.origin.y = borderFarH
+		if (level.origin.y - (player.origin.y - borderFarH) > -(levelHeight * cell.y - tHeight)) {
+			//move level up and keep player in place
+			level.origin.y -= player.origin.y - borderFarH
+			player.origin.y = borderFarH
+		}
 	}
 }
 
 //utils
-
-
 Math.clamp = function(number, min, max) {
 	return Math.max(min, Math.min(number, max));
 }
