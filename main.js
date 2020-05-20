@@ -29,6 +29,8 @@ let cell
 let levelWidth
 let levelHeight
 
+//Game Objects
+//////////////
 let level = {
 	origin: {}, 
 	rows: [],
@@ -85,7 +87,20 @@ let player = {
 	drill: false,
 	drillCount: 3,
 	drillStrength: 3,
+	rateOfFire: 1,
+	direction: 'right',
 	move: function() {
+
+		if (iRight) {
+			this.direction = 'right'
+		}
+		if (iLeft) {
+			this.direction = 'left'
+		}
+		if (iUp) {
+			this.direction = 'up'
+		}
+
 
 		if (!this.isGrounded && iDown && this.drillCount > 0) {
 			this.drill = true
@@ -255,9 +270,24 @@ let player = {
 		} 
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
+	},
+	fire: function() {
+//spawn bullet in origin determined by direction and pass speed params accordingly
 	}
 }
 
+class bullet {
+	constructor(origin, h, v, size = {x:20, y:20}) {
+		this.origin = origin
+		this.size = size
+		this.hSpeed = h
+		this.vSpeed = v
+	}
+	//needs collision logic (destroy or damage target)
+}
+
+//Game Logic
+////////////
 function gameStart() {
 	startScreen.remove()
 	document.body.appendChild(canvas)
@@ -299,8 +329,6 @@ function gameStart() {
 		y: 0
 	}
 	
-
-
 	//player
 	iLeft = false
 	iRight = false
@@ -347,6 +375,8 @@ function gameStart() {
 				break;		
 		}
 	}, false)
+
+	//Begin Game
 	window.requestAnimationFrame(update)
 }
 
@@ -360,6 +390,27 @@ function update() {
 	camera()
 	draw()	
 	window.requestAnimationFrame(update)
+}
+
+function handleInput() {
+	if (iLeft) {
+		hor = -1
+	} else if (iRight) {
+		hor = 1
+	} else {
+		hor = 0
+	}
+
+	if (iUp) {
+		ver = -3
+	} else if (iDown) {
+		ver = 2
+	} else {
+		ver = 0
+	}
+	if (iFire && canFire()) {
+		player.fire()
+	}
 }
 
 function draw() {
@@ -396,25 +447,6 @@ function draw() {
 	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth + topLeftBorder, topLeftBorder)
 }
 
-function handleInput() {
-	if (iLeft) {
-		hor = -1
-	} else if (iRight) {
-		hor = 1
-	} else {
-		hor = 0
-	}
-
-	if (iUp) {
-		ver = -3
-	} else if (iDown) {
-		ver = 2
-	} else {
-		ver = 0
-	}
-}
-
-//test vertical checks
 function camera() {
 	const borderNearW = cell.x * 3
 	const borderNearH = cell.y * 7
@@ -455,9 +487,18 @@ function camera() {
 	}
 }
 
-//utils
+//Utility functions
+///////////////////
 Math.clamp = function(number, min, max) {
 	return Math.max(min, Math.min(number, max));
+}
+
+function canFire() {
+	if (time - player.lastShot >= player.rateOfFire) {
+		return true
+	} else {
+		return false
+	}
 }
   
   
