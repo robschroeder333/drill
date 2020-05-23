@@ -89,6 +89,9 @@ let player = {
 	drillStrength: 3,
 	rateOfFire: 1,
 	direction: 'right',
+	bullets: {
+
+	},
 	move: function() {
 
 		if (iRight) {
@@ -273,17 +276,39 @@ let player = {
 	},
 	fire: function() {
 //spawn bullet in origin determined by direction and pass speed params accordingly
+		switch (this.direction) {
+			case 'right':
+				
+				break;
+		
+			default:
+				break;
+		}
 	}
 }
 
 class bullet {
-	constructor(origin, h, v, size = {x:20, y:20}) {
+	constructor(origin, h, v, size = {x:10, y:10}) {
 		this.origin = origin
 		this.size = size
 		this.hSpeed = h
 		this.vSpeed = v
+		this.next = null
+		this.prev = null
 	}
-	//needs collision logic (destroy or damage target)
+	check() {
+		this.move()
+		//needs collision logic (destroy or damage target)
+			this.collision()
+				this.damage()
+				this.remove()
+	}
+	remove() {
+		if (this.next && this.prev) {
+			this.next.prev = this.prev
+			this.prev.next = this.next
+		}
+	}
 }
 
 //Game Logic
@@ -498,6 +523,29 @@ function canFire() {
 		return true
 	} else {
 		return false
+	}
+}
+
+class collection {
+	constructor() {
+		this.head = null
+	}
+	add(node) {
+		if (this.head != null) {
+			node.next = this.head
+			this.head.prev = node
+		}
+		this.head = node
+	}
+	checkAll() {
+		this.step(this.head)
+	}
+	step(node) {
+		if (node = null) {
+			return
+		}
+		node.check()
+		this.step(node.next)
 	}
 }
   
