@@ -99,9 +99,9 @@ let player = {
 		if (iLeft) {
 			this.direction = 'left'
 		}
-		if (iUp) {
-			this.direction = 'up'
-		}
+		// if (iUp) {
+		// 	this.direction = 'up'
+		// }
 
 
 		if (!this.isGrounded && iDown && this.drillCount > 0) {
@@ -363,10 +363,39 @@ class Bullet {
 			return
 		}
 
-		//if (!this.willRemove && )
+		//collision with level
+		if (!this.willRemove) {
+			let topLeft = {x: nextX, y: nextY}
+			let bottomLeft = {x: nextX, y: nextY + this.size.y}
+			let bottomRight = {x: nextX + this.size.x, y: nextY + this.size.y}
+			let topRight = {x: nextX + this.size.x, y: nextY}
+			let collision = false
 
-		this.origin.x = nextX
-		this.origin.y = nextY
+			if (level.rows[Math.floor(topLeft.y / cell.y)][Math.floor(topLeft.x / cell.x)] != null) {
+				level.rows[Math.floor(topLeft.y / cell.y)][Math.floor(topLeft.x / cell.x)] = null
+				collision = true
+			}
+			if (level.rows[Math.floor(bottomLeft.y / cell.y)][Math.floor(bottomLeft.x / cell.x)] != null) {
+				level.rows[Math.floor(bottomLeft.y / cell.y)][Math.floor(bottomLeft.x / cell.x)] = null
+				collision = true
+			}
+			if (level.rows[Math.floor(bottomRight.y / cell.y)][Math.floor(bottomRight.x / cell.x)] != null) {
+				level.rows[Math.floor(bottomRight.y / cell.y)][Math.floor(bottomRight.x / cell.x)] = null
+				collision = true
+			}
+			if (level.rows[Math.floor(topRight.y / cell.y)][Math.floor(topRight.x / cell.x)] != null) {
+				level.rows[Math.floor(topRight.y / cell.y)][Math.floor(topRight.x / cell.x)] = null
+				collision = true
+			}
+			
+			if (collision) {
+				this.willRemove = true
+			}
+		}
+		if (!this.willRemove) {
+			this.origin.x = nextX
+			this.origin.y = nextY
+		}
 
 	}
 	remove() {
