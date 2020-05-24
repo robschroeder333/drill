@@ -89,9 +89,8 @@ let player = {
 	drillStrength: 3,
 	rateOfFire: 1,
 	direction: 'right',
-	bullets: {
-
-	},
+	//bullets,
+	//lastShot,
 	move: function() {
 
 		if (iRight) {
@@ -278,30 +277,60 @@ let player = {
 //spawn bullet in origin determined by direction and pass speed params accordingly
 		switch (this.direction) {
 			case 'right':
-				
-				break;
-		
+				this.bullets.add(new Bullet({
+						x: (this.origin.x + this.size.x + 3) - level.origin.x, 
+						y: (this.origin.y + 5) - level.origin.y
+					},
+					20,
+					0
+				))
+				this.lastShot = Date.now()
+				break
+			case 'left':
+				this.bullets.add(new Bullet({
+						x: (this.origin.x - 13) - level.origin.x, 
+						y: (this.origin.y + 5) - level.origin.y
+					},
+					-20,
+					0
+				))
+				this.lastShot = Date.now()
+				break
+			case 'up':
+				this.bullets.add(new Bullet({
+						x: (this.origin.x + 5) - level.origin.x, 
+						y: this.origin.y - 13 - level.origin.y
+					},
+					0,
+					-20
+				))
+				this.lastShot = Date.now()
+				break
 			default:
-				break;
+				break
 		}
 	}
 }
 
-class bullet {
-	constructor(origin, h, v, size = {x:10, y:10}) {
+class Bullet {
+	constructor(origin, hSpeed, vSpeed, size = {x:10, y:10}) {
 		this.origin = origin
 		this.size = size
-		this.hSpeed = h
-		this.vSpeed = v
+		this.hSpeed = hSpeed
+		this.vSpeed = vSpeed
 		this.next = null
 		this.prev = null
 	}
 	check() {
-		this.move()
-		//needs collision logic (destroy or damage target)
-			this.collision()
-				this.damage()
-				this.remove()
+		drawObject(this, 'red')
+		// this.move()
+		// //needs collision logic (destroy or damage target)
+		// 	this.collision()
+		// 		this.damage()
+		// 		this.remove()
+	}
+	move() {
+
 	}
 	remove() {
 		if (this.next && this.prev) {
@@ -309,6 +338,7 @@ class bullet {
 			this.prev.next = this.next
 		}
 	}
+
 }
 
 //Game Logic
@@ -341,13 +371,9 @@ function gameStart() {
 		x: tWidth / division.x, 
 		y: tHeight / division.y
 	}
-	player.origin = {
-		x: tWidth / 2, 
-		y: cell.y * 3
-	}
 	levelHeight = 100
 	levelWidth = 50
-
+	
 	level.generate()
 	level.origin = {
 		x: -Math.floor(level.rows[0].length / 2) * cell.x, 
@@ -360,6 +386,13 @@ function gameStart() {
 	iUp = false
 	iDown = false	
 	iFire = false
+	
+	player.origin = {
+		x: tWidth / 2, 
+		y: cell.y * 3
+	}
+	player.bullets = new Collection()
+	player.lastShot = Date.now()
 
 	document.addEventListener('keydown', (event) => {
 		switch (event.code) {
@@ -411,7 +444,7 @@ function update() {
 	delta = (Date.now() - time) / 1000
 	time = Date.now()
 	handleInput()
-	player.move()
+	player.move()	
 	camera()
 	draw()	
 	window.requestAnimationFrame(update)
@@ -433,6 +466,7 @@ function handleInput() {
 	} else {
 		ver = 0
 	}
+
 	if (iFire && canFire()) {
 		player.fire()
 	}
@@ -440,14 +474,20 @@ function handleInput() {
 
 function draw() {
 	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth, tHeight)
+	
+	//Draw background
 	ctx.fillStyle = 'black'	
 	ctx.fillRect(0, 0, tWidth, tHeight)
 	
+	//Draw player
 	ctx.save()
 	ctx.translate(player.origin.x, player.origin.y)
 	ctx.fillStyle = 'green'
 	ctx.fillRect(0, 0, player.size.x, player.size.y)
 	ctx.restore()
+
+	//Draw player's bullets
+	player.bullets.checkAll()
 
 	//Draw level with frustum culling
 	let topRow = Math.clamp(-Math.ceil(level.origin.y / cell.y), 0, levelHeight)
@@ -518,15 +558,23 @@ Math.clamp = function(number, min, max) {
 	return Math.max(min, Math.min(number, max));
 }
 
+function drawObject(obj, color) {
+	ctx.save()
+	ctx.translate(obj.origin.x + level.origin.x, obj.origin.y + level.origin.y)
+	ctx.fillStyle = color
+	ctx.fillRect(0, 0, obj.size.x, obj.size.y)
+	ctx.restore()
+}
+
 function canFire() {
-	if (time - player.lastShot >= player.rateOfFire) {
+	if (player.bullets.head == null || (time - player.lastShot)/1000 >= player.rateOfFire) {
 		return true
 	} else {
 		return false
 	}
 }
 
-class collection {
+class Collection {
 	constructor() {
 		this.head = null
 	}
@@ -541,7 +589,7 @@ class collection {
 		this.step(this.head)
 	}
 	step(node) {
-		if (node = null) {
+		if (node == null) {
 			return
 		}
 		node.check()
