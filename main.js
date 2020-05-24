@@ -320,23 +320,71 @@ class Bullet {
 		this.vSpeed = vSpeed
 		this.next = null
 		this.prev = null
+		this.willRemove = false
 	}
-	check() {
-		drawObject(this, 'red')
-		// this.move()
+	check() {		
+		this.move()
+		console.log(this.origin)
 		// //needs collision logic (destroy or damage target)
 		// 	this.collision()
 		// 		this.damage()
 		// 		this.remove()
+		if (this.willRemove) {
+			this.remove()
+		}
+	}
+	draw() {
+		drawObject(this, 'red')
 	}
 	move() {
+		let nextX = this.origin.x + this.hSpeed
+		let nextY = this.origin.y + this.vSpeed
+
+		let checkRow
+		let checkBlock
+		//boundary right
+		if (nextX + this.size.x > cell.x * levelWidth) {
+			this.willRemove = true
+			return
+		}
+		//boundary left
+		if (!this.willRemove && nextX < 0) {
+			this.willRemove = true
+			return
+		}
+		//boundary top
+		if (!this.willRemove && nextY < 0) {
+			this.willRemove = true
+			return
+		}
+		//boundary right
+		if (!this.willRemove && nextY + this.size.y > cell.y * levelHeight) {
+			this.willRemove = true
+			return
+		}
+
+		//if (!this.willRemove && )
+
+		this.origin.x = nextX
+		this.origin.y = nextY
 
 	}
 	remove() {
+		//middle of list
 		if (this.next && this.prev) {
 			this.next.prev = this.prev
 			this.prev.next = this.next
+		//head of list
+		} else if (this.prev == null) {
+			player.bullets.head = this.next
+			if (this.next) {
+				this.next.prev = null
+			}
+		//tail of list
+		} else {
+			this.prev.next = null
 		}
+
 	}
 
 }
@@ -445,6 +493,7 @@ function update() {
 	time = Date.now()
 	handleInput()
 	player.move()	
+	player.bullets.checkAll()
 	camera()
 	draw()	
 	window.requestAnimationFrame(update)
@@ -487,7 +536,7 @@ function draw() {
 	ctx.restore()
 
 	//Draw player's bullets
-	player.bullets.checkAll()
+	player.bullets.drawAll()
 
 	//Draw level with frustum culling
 	let topRow = Math.clamp(-Math.ceil(level.origin.y / cell.y), 0, levelHeight)
@@ -594,6 +643,16 @@ class Collection {
 		}
 		node.check()
 		this.step(node.next)
+	}
+	drawAll() {
+		this.drawOne(this.head)
+	}
+	drawOne(node) {
+		if (node == null) {
+			return
+		}
+		node.draw()
+		this.drawOne(node.next)
 	}
 }
   
