@@ -23,7 +23,8 @@ let iUp
 let iDown	
 let hor
 let ver
-let iFire		
+let iFire	
+let iJump	
 
 let cell
 let levelWidth
@@ -99,9 +100,9 @@ let player = {
 		if (iLeft) {
 			this.direction = 'left'
 		}
-		// if (iUp) {
-		// 	this.direction = 'up'
-		// }
+		if (iUp) {
+			this.direction = 'up'
+		}
 
 
 		if (!this.isGrounded && iDown && this.drillCount > 0) {
@@ -111,7 +112,7 @@ let player = {
 		}
 
 		//buffer for delayed jump input
-		if (!iUp) {
+		if (!iJump) {
 			if (this.isGrounded) {
 				this.jumpStrength = 20
 				this.jAllowance = 1
@@ -463,6 +464,7 @@ function gameStart() {
 	iUp = false
 	iDown = false	
 	iFire = false
+	iJump = false
 	
 	player.origin = {
 		x: tWidth / 2, 
@@ -473,8 +475,11 @@ function gameStart() {
 
 	document.addEventListener('keydown', (event) => {
 		switch (event.code) {
-			case 'Space':
+			case 'KeyC':
 				iFire = true
+				break;
+			case 'KeyX':
+				iJump = true
 				break;
 			case 'ArrowLeft':
 				iLeft = true				
@@ -493,8 +498,11 @@ function gameStart() {
 					
 	document.addEventListener('keyup', (event) => {
 		switch (event.code) {
-			case 'Space':
+			case 'KeyC':
 				iFire = false
+				break;
+			case 'KeyX':
+				iJump = false
 				break;
 			case 'ArrowLeft':
 				iLeft = false
@@ -537,7 +545,7 @@ function handleInput() {
 		hor = 0
 	}
 
-	if (iUp) {
+	if (iJump) {
 		ver = -3
 	} else if (iDown) {
 		ver = 2
