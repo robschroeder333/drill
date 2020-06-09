@@ -653,7 +653,8 @@ function drawObject(obj, color) {
 }
 
 function canFire() {
-	if (player.bullets.head == null || (time - player.lastShot)/1000 >= player.rateOfFire) {
+	if ((player.bullets.head == null && ((time - player.lastShot)/1000 >= player.rateOfFire / 2)) 
+		|| (time - player.lastShot)/1000 >= player.rateOfFire) {
 		return true
 	} else {
 		return false
