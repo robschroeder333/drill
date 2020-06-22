@@ -431,22 +431,25 @@ class Enemy {
 		this.willRemove = false
 	}
 	spawn() {
+		//Boundary corners (adjusted to level array positions)
 		const tL = {
-			x: this.origin.x + (-2 * this.size.x),
-			y: this.origin.y + (-1 * this.size.y)
-		}
-		const tR = {
-			x: this.origin.x + (3 * this.size.x),
-			y: this.origin.y + (-1 * this.size.y)
-		}
-		const bL = {
-			x: this.origin.x + (-2 * this.size.x),
-			y: this.origin.y + (2 * this.size.y)
-		}
+			x: Math.clamp(Math.floor((this.origin.x + (-2 * this.size.x)) / cell.x), 0, levelWidth),
+			y: Math.clamp(Math.floor((this.origin.y + (-1 * this.size.y)) / cell.y), 0, levelHeight)
+		}		
 		const bR = {
-			x: this.origin.x + (3 * this.size.x),
-			y: this.origin.y + (2 * this.size.y)
+			x: Math.clamp(Math.floor((this.origin.x + (3 * this.size.x)) / cell.x), 0, levelWidth),
+			y: Math.clamp(Math.floor((this.origin.y + (2 * this.size.y)) / cell.y), 0, levelHeight)
 		}
+
+		//Clear space for enemy
+		for(row = tL.y; row < bR.y; row++) {
+			for(block = tL.x; block < bR.x; block++) {
+				if(level.rows[row][block] != null) {
+					level.rows[row][block] = null
+				}
+			}
+		}
+		
 	}
 	target() {
 
