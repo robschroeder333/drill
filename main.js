@@ -325,8 +325,7 @@ class Bullet {
 	}
 	check() {		
 		this.move()
-		console.log(this.origin)
-		// //needs collision logic (destroy or damage target)
+		// //needs collision logic ([x]destroy or [ ]damage target)
 		// 	this.collision()
 		// 		this.damage()
 		// 		this.remove()
@@ -417,6 +416,69 @@ class Bullet {
 
 	}
 
+}
+
+class Enemy {
+	constructor(origin, size, health, isBoss = false) {
+		this.isBoss = isBoss
+		this.size = size
+		this.origin = origin
+		this.health = health
+		this.hSpeed = 0
+		this.vSpeed = 0
+		this.next = null
+		this.prev = null
+		this.willRemove = false
+	}
+	spawn() {
+		const tL = {
+			x: this.origin.x + (-2 * this.size.x),
+			y: this.origin.y + (-1 * this.size.y)
+		}
+		const tR = {
+			x: this.origin.x + (3 * this.size.x),
+			y: this.origin.y + (-1 * this.size.y)
+		}
+		const bL = {
+			x: this.origin.x + (-2 * this.size.x),
+			y: this.origin.y + (2 * this.size.y)
+		}
+		const bR = {
+			x: this.origin.x + (3 * this.size.x),
+			y: this.origin.y + (2 * this.size.y)
+		}
+	}
+	target() {
+
+	}
+	remove() {
+		//middle of list
+		if (this.next && this.prev) {
+			this.next.prev = this.prev
+			this.prev.next = this.next
+		//head of list
+		} else if (this.prev == null) {
+			player.bullets.head = this.next
+			if (this.next) {
+				this.next.prev = null
+			}
+		//tail of list
+		} else {
+			this.prev.next = null
+		}
+
+	}
+}
+class Shot extends Enemy {
+	constructor(origin, size, health) {
+		super(origin, size, health)
+	}
+	check() {
+
+	}
+	attack() {
+
+	}
 }
 
 //Game Logic
