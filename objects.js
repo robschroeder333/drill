@@ -1,37 +1,8 @@
-const startScreen = document.createElement('div')
-const title = document.createElement('h1')
-const playButton = document.createElement('button')
-const canvas = document.createElement('canvas')
-const ctx = canvas.getContext('2d')
-
-title.innerHTML = 'Drill Game'
-playButton.innerHTML = 'Begin'
-playButton.onclick = gameStart
-
-startScreen.appendChild(title)
-startScreen.appendChild(playButton)
-document.body.appendChild(startScreen)
-
-let delta
-
-let tWidth
-let tHeight
-let topLeftBorder
-let iLeft
-let iRight
-let iUp
-let iDown	
-let hor
-let ver
-let iFire	
-let iJump	
-
-let cell
-let levelWidth
-let levelHeight
-
 //Game Objects
 //////////////
+
+let enemies
+
 let level = {
 	origin: {}, 
 	rows: [],
@@ -74,6 +45,12 @@ let level = {
 
 let player = {
 	origin: {},
+	worldOrigin: function() {
+		return {
+			x: this.origin.x - level.origin.x,
+			y: this.origin.y - level.origin.y
+		}
+	},
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
 	speed: 500,
@@ -88,7 +65,7 @@ let player = {
 	drill: false,
 	drillCount: 3,
 	drillStrength: 3,
-	rateOfFire: 1,
+	shotDelay: 1,
 	direction: 'right',
 	//bullets,
 	//lastShot,
@@ -278,7 +255,8 @@ let player = {
 //spawn bullet in origin determined by direction and pass speed params accordingly
 		switch (this.direction) {
 			case 'right':
-				this.bullets.add(new Bullet({
+				this.bullets.add(new Bullet(
+					{
 						x: (this.origin.x + this.size.x + 3) - level.origin.x, 
 						y: (this.origin.y + 5) - level.origin.y
 					},
@@ -288,7 +266,8 @@ let player = {
 				this.lastShot = Date.now()
 				break
 			case 'left':
-				this.bullets.add(new Bullet({
+				this.bullets.add(new Bullet(
+					{
 						x: (this.origin.x - 13) - level.origin.x, 
 						y: (this.origin.y + 5) - level.origin.y
 					},
@@ -298,7 +277,8 @@ let player = {
 				this.lastShot = Date.now()
 				break
 			case 'up':
-				this.bullets.add(new Bullet({
+				this.bullets.add(new Bullet(
+					{
 						x: (this.origin.x + 5) - level.origin.x, 
 						y: this.origin.y - 13 - level.origin.y
 					},
@@ -313,20 +293,17 @@ let player = {
 	}
 }
 
-class Bullet {
+class Bullet extends Node{
 	constructor(origin, hSpeed, vSpeed, size = {x:10, y:10}) {
+		super()
 		this.origin = origin
 		this.size = size
 		this.hSpeed = hSpeed
 		this.vSpeed = vSpeed
-		this.next = null
-		this.prev = null
-		this.willRemove = false
 	}
 	check() {		
 		this.move()
-		console.log(this.origin)
-		// //needs collision logic (destroy or damage target)
+		// //needs collision logic ([x]destroy or [ ]damage target)
 		// 	this.collision()
 		// 		this.damage()
 		// 		this.remove()
@@ -399,299 +376,110 @@ class Bullet {
 		}
 
 	}
-	remove() {
-		//middle of list
-		if (this.next && this.prev) {
-			this.next.prev = this.prev
-			this.prev.next = this.next
-		//head of list
-		} else if (this.prev == null) {
-			player.bullets.head = this.next
-			if (this.next) {
-				this.next.prev = null
+}
+
+class Enemy extends Node {
+	constructor(origin, size, health, isBoss = false) {	
+		super()	
+		this.isBoss = isBoss
+		this.size = size
+		this.origin = origin
+		this.health = health
+		this.hSpeed = 0
+		this.vSpeed = 0
+		this.spawned = false
+	}
+	spawn() {
+		//Boundary corners (adjusted to level array positions)
+		const tL = {
+			x: Math.clamp(Math.floor(this.origin.x / cell.x) - 2, 0, levelWidth),
+			y: Math.clamp(Math.floor(this.origin.y / cell.y) - 1, 0, levelHeight)
+		}		
+		const bR = {
+			x: Math.clamp(Math.floor((this.origin.x + this.size.x) / cell.x) + 2, 0, levelWidth),
+			y: Math.clamp(Math.floor((this.origin.y + this.size.y) / cell.y) + 1, 0, levelHeight)
+		}
+
+		//Clear space for enemy
+		for (let row = tL.y; row < bR.y; row++) {
+			for (let block = tL.x; block < bR.x; block++) {
+				if (level.rows[row][block] != null) {
+					level.rows[row][block] = null
+				}
 			}
-		//tail of list
-		} else {
-			this.prev.next = null
 		}
-
+		this.spawned = true
 	}
-
-}
-
-//Game Logic
-////////////
-function gameStart() {
-	startScreen.remove()
-	document.body.appendChild(canvas)
-
-	hor = 0
-	ver = 0
-	delta = 0
-
-	//total dimensions for canvas with offset for border
-	tWidth = window.innerWidth - 25
-	tHeight = window.innerHeight - 25
-	canvas.width = tWidth
-	canvas.height = tHeight
-	
-	//adjust total dimensions for translation offset
-	topLeftBorder = 10
-	
-	ctx.translate(topLeftBorder, topLeftBorder)
-	ctx.save()
-
-	tWidth -= topLeftBorder
-	tHeight -= topLeftBorder
-	
-	division = {x: 20, y: 20}
-	cell = {
-		x: tWidth / division.x, 
-		y: tHeight / division.y
-	}
-	levelHeight = 100
-	levelWidth = 50
-	
-	level.generate()
-	level.origin = {
-		x: -Math.floor(level.rows[0].length / 2) * cell.x, 
-		y: 0
-	}
-	
-	//player
-	iLeft = false
-	iRight = false
-	iUp = false
-	iDown = false	
-	iFire = false
-	iJump = false
-	
-	player.origin = {
-		x: tWidth / 2, 
-		y: cell.y * 3
-	}
-	player.bullets = new Collection()
-	player.lastShot = Date.now()
-
-	document.addEventListener('keydown', (event) => {
-		switch (event.code) {
-			case 'KeyC':
-				iFire = true
-				break;
-			case 'KeyX':
-				iJump = true
-				break;
-			case 'ArrowLeft':
-				iLeft = true				
-				break;		
-			case 'ArrowRight':
-				iRight = true				
-				break;		
-			case 'ArrowUp':
-				iUp = true				
-				break;		
-			case 'ArrowDown':
-				iDown = true				
-				break;		
+	withinRange(range) {
+		const p = player.worldOrigin()
+		const vector = {
+			x: p.x - this.origin.x,
+			y: p.y - this.origin.y
 		}
-	}, false)
-					
-	document.addEventListener('keyup', (event) => {
-		switch (event.code) {
-			case 'KeyC':
-				iFire = false
-				break;
-			case 'KeyX':
-				iJump = false
-				break;
-			case 'ArrowLeft':
-				iLeft = false
-				break;		
-			case 'ArrowRight':
-				iRight = false
-				break;		
-			case 'ArrowUp':
-				iUp = false
-				break;		
-			case 'ArrowDown':
-				iDown = false
-				break;		
-		}
-	}, false)
-
-	//Begin Game
-	window.requestAnimationFrame(update)
-}
-
-
-let time = Date.now()
-function update() {
-	delta = (Date.now() - time) / 1000
-	time = Date.now()
-	handleInput()
-	player.move()	
-	player.bullets.checkAll()
-	camera()
-	draw()	
-	window.requestAnimationFrame(update)
-}
-
-function handleInput() {
-	if (iLeft) {
-		hor = -1
-	} else if (iRight) {
-		hor = 1
-	} else {
-		hor = 0
-	}
-
-	if (iJump) {
-		ver = -3
-	} else if (iDown) {
-		ver = 2
-	} else {
-		ver = 0
-	}
-
-	if (iFire && canFire()) {
-		player.fire()
-	}
-}
-
-function draw() {
-	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth, tHeight)
-	
-	//Draw background
-	ctx.fillStyle = 'black'	
-	ctx.fillRect(0, 0, tWidth, tHeight)
-	
-	//Draw player
-	ctx.save()
-	ctx.translate(player.origin.x, player.origin.y)
-	ctx.fillStyle = 'green'
-	ctx.fillRect(0, 0, player.size.x, player.size.y)
-	ctx.restore()
-
-	//Draw player's bullets
-	player.bullets.drawAll()
-
-	//Draw level with frustum culling
-	let topRow = Math.clamp(-Math.ceil(level.origin.y / cell.y), 0, levelHeight)
-	let leftCell = Math.clamp(-Math.ceil(level.origin.x / cell.x), 0, levelWidth)
-	let bottomRow = Math.clamp(topRow + division.y, 0, levelHeight)
-	let rightCell = Math.clamp(leftCell + division.x, 0, levelWidth)
-	for (let rowI = topRow; rowI <= bottomRow; rowI++) {
-		for (let blockI = leftCell; blockI <= rightCell; blockI++) {
-			let block = level.rows[rowI][blockI]
-			if (block) {
-				ctx.save()
-				ctx.translate(block.origin.x + level.origin.x, block.origin.y + level.origin.y)
-				ctx.fillStyle = block.color
-				ctx.strokeStyle = 'blue'
-				ctx.fillRect(0, 0, cell.x, cell.y)
-				ctx.strokeRect(0, 0, cell.x, cell.y)
-				ctx.restore()
-			}	
-		}
-	}
-	ctx.clearRect(-topLeftBorder, -topLeftBorder, topLeftBorder, tHeight + topLeftBorder)
-	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth + topLeftBorder, topLeftBorder)
-}
-
-function camera() {
-	const borderNearW = cell.x * 3
-	const borderNearH = cell.y * 7
-	const borderFarW = tWidth - borderNearW
-	const borderFarH = tHeight - borderNearH	
-
-	//horizontal
-	if (player.origin.x < borderNearW) {
-		//prevent camera from seeing past left edge of level
-		if (borderNearW - player.origin.x + level.origin.x < 0) {
-			//move level right and keep player in place
-			level.origin.x += borderNearW - player.origin.x
-			player.origin.x = borderNearW
-		}
-		
-	} else if (player.origin.x > borderFarW) {
-		//prevent camera from seeing past right edge of level
-		if (level.origin.x - (player.origin.x - borderFarW) > -(levelWidth * cell.x - tWidth)) {
-			//move level left and keep player in place
-			level.origin.x -= (player.origin.x) - borderFarW
-			player.origin.x = borderFarW
-		}
-	}
-
-	//vertical
-	if (player.origin.y < borderNearH) {
-		if (borderNearH - player.origin.y + level.origin.y < 0) {
-			//move level down and keep player in place
-			level.origin.y += borderNearH - player.origin.y
-			player.origin.y = borderNearH
-		}
-	} else if (player.origin.y > borderFarH) {
-		if (level.origin.y - (player.origin.y - borderFarH) > -(levelHeight * cell.y - tHeight)) {
-			//move level up and keep player in place
-			level.origin.y -= player.origin.y - borderFarH
-			player.origin.y = borderFarH
+		const distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2))
+		if (distance <= this.size.x * range) {
+			return true
 		}
 	}
 }
-
-//Utility functions
-///////////////////
-Math.clamp = function(number, min, max) {
-	return Math.max(min, Math.min(number, max));
-}
-
-function drawObject(obj, color) {
-	ctx.save()
-	ctx.translate(obj.origin.x + level.origin.x, obj.origin.y + level.origin.y)
-	ctx.fillStyle = color
-	ctx.fillRect(0, 0, obj.size.x, obj.size.y)
-	ctx.restore()
-}
-
-function canFire() {
-	if ((player.bullets.head == null && ((time - player.lastShot)/1000 >= player.rateOfFire / 2)) 
-		|| (time - player.lastShot)/1000 >= player.rateOfFire) {
-		return true
-	} else {
-		return false
+class Shooter extends Enemy {
+	constructor(origin, size, health) {
+		super(origin, size, health)
+		this.lastLock = time
+		this.lastShot = time
+		this.range = 50
+		this.shotDelay = 4
+		this.bullets = new Collection()
 	}
-}
-
-class Collection {
-	constructor() {
-		this.head = null
-	}
-	add(node) {
-		if (this.head != null) {
-			node.next = this.head
-			this.head.prev = node
+	check() {
+		//logic for spawn
+		if (!this.spawned && this.withinRange(100)) { //adjust range for frustum culling
+			this.spawn()
 		}
-		this.head = node
-	}
-	checkAll() {
-		this.step(this.head)
-	}
-	step(node) {
-		if (node == null) {
-			return
+
+		//logic for attack conditions
+		if (this.spawned) {
+			if (this.withinRange(this.range)) {
+				let check = (time - this.lastLock)
+				if (check >= 400) {
+					if (this.vector && canFire(this)) {
+						this.attack()
+						this.lastShot = time
+					}
+					this.lastLock = time
+					const p = player.worldOrigin()
+					const vector = {
+						x: p.x - this.origin.x,
+						y: p.y - this.origin.y
+					}
+					const distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2))
+					const normalized = {
+						x: vector.x / distance,
+						y: vector.y / distance
+					}
+					this.vector = {
+						x: normalized.x * 20,
+						y: normalized.y * 20
+					}
+				}
+			}
+			this.bullets.checkAll()
 		}
-		node.check()
-		this.step(node.next)
 	}
-	drawAll() {
-		this.drawOne(this.head)
+	attack() {
+		this.bullets.add(new Bullet(
+			{
+				x: this.origin.x,
+				y: this.origin.y
+			},
+			this.vector.x,
+			this.vector.y
+		))
 	}
-	drawOne(node) {
-		if (node == null) {
-			return
+	draw() {
+		if(this.spawned) {
+			drawObject(this, 'white')
+			this.bullets.drawAll()
 		}
-		node.draw()
-		this.drawOne(node.next)
 	}
 }
-  
-  
