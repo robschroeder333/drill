@@ -14,8 +14,8 @@ function drawObject(obj, color) {
 }
 
 function canFire(obj) {
-	if ((obj.bullets.head == null && ((time - obj.lastShot)/1000 >= obj.rateOfFire / 2)) 
-		|| (time - obj.lastShot)/1000 >= obj.rateOfFire) {
+	if ((obj.bullets.head == null && ((time - obj.lastShot)/1000 >= obj.shotDelay / 2)) 
+		|| (time - obj.lastShot)/1000 >= obj.shotDelay) {
 		return true
 	} else {
 		return false

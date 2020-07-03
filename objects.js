@@ -65,7 +65,7 @@ let player = {
 	drill: false,
 	drillCount: 3,
 	drillStrength: 3,
-	rateOfFire: 1,
+	shotDelay: 1,
 	direction: 'right',
 	//bullets,
 	//lastShot,
@@ -425,44 +425,53 @@ class Enemy extends Node {
 class Shooter extends Enemy {
 	constructor(origin, size, health) {
 		super(origin, size, health)
-		this.lastLock = Date.now
-		this.lastShot = Date.now
-		this.rateOfFire = 1
+		this.lastLock = time
+		this.lastShot = time
+		this.range = 50
+		this.shotDelay = 4
 		this.bullets = new Collection()
 	}
 	check() {
 		//logic for spawn
-		if (!this.spawned && this.withinRange(100)) {
+		if (!this.spawned && this.withinRange(100)) { //adjust range for frustum culling
 			this.spawn()
 		}
 
 		//logic for attack conditions
-		if (this.spawned && this.withinRange(5)) {
-			if ((Date.now - this.lastLock) / 1000 >= 400) {
-				if (this.vector && canFire(this)) {
-					this.attack()
-				}
-				this.lastLock = Date.now
-				const p = player.worldOrigin()
-				const vector = {
-					x: p.x - this.origin.x,
-					y: p.y - this.origin.y
-				}
-				const distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2))
-				const normalized = {
-					x: vector.x / distance,
-					y: vector.y / distance
-				}
-				this.vector = {
-					x: normalized * 20,
-					y: normalized * 20
+		if (this.spawned) {
+			if (this.withinRange(this.range)) {
+				let check = (time - this.lastLock)
+				if (check >= 400) {
+					if (this.vector && canFire(this)) {
+						this.attack()
+						this.lastShot = time
+					}
+					this.lastLock = time
+					const p = player.worldOrigin()
+					const vector = {
+						x: p.x - this.origin.x,
+						y: p.y - this.origin.y
+					}
+					const distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2))
+					const normalized = {
+						x: vector.x / distance,
+						y: vector.y / distance
+					}
+					this.vector = {
+						x: normalized.x * 20,
+						y: normalized.y * 20
+					}
 				}
 			}
+			this.bullets.checkAll()
 		}
 	}
 	attack() {
 		this.bullets.add(new Bullet(
-			this.origin,
+			{
+				x: this.origin.x,
+				y: this.origin.y
+			},
 			this.vector.x,
 			this.vector.y
 		))
@@ -470,6 +479,7 @@ class Shooter extends Enemy {
 	draw() {
 		if(this.spawned) {
 			drawObject(this, 'white')
+			this.bullets.drawAll()
 		}
 	}
 }
