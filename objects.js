@@ -1,6 +1,8 @@
 //Game Objects
 //////////////
 
+let enemies
+
 let level = {
 	origin: {}, 
 	rows: [],
@@ -43,6 +45,12 @@ let level = {
 
 let player = {
 	origin: {},
+	worldOrigin: function() {
+		return {
+			x: this.origin.x - level.origin.x,
+			y: this.origin.y - level.origin.y
+		}
+	},
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
 	speed: 500,
@@ -379,40 +387,89 @@ class Enemy extends Node {
 		this.health = health
 		this.hSpeed = 0
 		this.vSpeed = 0
+		this.spawned = false
 	}
 	spawn() {
 		//Boundary corners (adjusted to level array positions)
 		const tL = {
-			x: Math.clamp(Math.floor((this.origin.x + (-2 * this.size.x)) / cell.x), 0, levelWidth),
-			y: Math.clamp(Math.floor((this.origin.y + (-1 * this.size.y)) / cell.y), 0, levelHeight)
+			x: Math.clamp(Math.floor(this.origin.x / cell.x) - 2, 0, levelWidth),
+			y: Math.clamp(Math.floor(this.origin.y / cell.y) - 1, 0, levelHeight)
 		}		
 		const bR = {
-			x: Math.clamp(Math.floor((this.origin.x + (3 * this.size.x)) / cell.x), 0, levelWidth),
-			y: Math.clamp(Math.floor((this.origin.y + (2 * this.size.y)) / cell.y), 0, levelHeight)
+			x: Math.clamp(Math.floor((this.origin.x + this.size.x) / cell.x) + 2, 0, levelWidth),
+			y: Math.clamp(Math.floor((this.origin.y + this.size.y) / cell.y) + 1, 0, levelHeight)
 		}
 
 		//Clear space for enemy
-		for(row = tL.y; row < bR.y; row++) {
-			for(block = tL.x; block < bR.x; block++) {
-				if(level.rows[row][block] != null) {
+		for (let row = tL.y; row < bR.y; row++) {
+			for (let block = tL.x; block < bR.x; block++) {
+				if (level.rows[row][block] != null) {
 					level.rows[row][block] = null
 				}
 			}
 		}
-		
+		this.spawned = true
 	}
-	target() {
-		
+	withinRange(range) {
+		const p = player.worldOrigin()
+		const vector = {
+			x: p.x - this.origin.x,
+			y: p.y - this.origin.y
+		}
+		const distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2))
+		if (distance <= this.size.x * range) {
+			return true
+		}
 	}
 }
 class Shooter extends Enemy {
 	constructor(origin, size, health) {
 		super(origin, size, health)
+		this.lastLock = Date.now
+		this.lastShot = Date.now
+		this.rateOfFire = 1
+		this.bullets = new Collection()
 	}
 	check() {
+		//logic for spawn
+		if (!this.spawned && this.withinRange(100)) {
+			this.spawn()
+		}
 
+		//logic for attack conditions
+		if (this.spawned && this.withinRange(5)) {
+			if ((Date.now - this.lastLock) / 1000 >= 400) {
+				if (this.vector && canFire(this)) {
+					this.attack()
+				}
+				this.lastLock = Date.now
+				const p = player.worldOrigin()
+				const vector = {
+					x: p.x - this.origin.x,
+					y: p.y - this.origin.y
+				}
+				const distance = Math.sqrt(Math.pow(vector.x, 2) + Math.pow(vector.y, 2))
+				const normalized = {
+					x: vector.x / distance,
+					y: vector.y / distance
+				}
+				this.vector = {
+					x: normalized * 20,
+					y: normalized * 20
+				}
+			}
+		}
 	}
 	attack() {
-
+		this.bullets.add(new Bullet(
+			this.origin,
+			this.vector.x,
+			this.vector.y
+		))
+	}
+	draw() {
+		if(this.spawned) {
+			drawObject(this, 'white')
+		}
 	}
 }

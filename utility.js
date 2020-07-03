@@ -13,9 +13,9 @@ function drawObject(obj, color) {
 	ctx.restore()
 }
 
-function canFire() {
-	if ((player.bullets.head == null && ((time - player.lastShot)/1000 >= player.rateOfFire / 2)) 
-		|| (time - player.lastShot)/1000 >= player.rateOfFire) {
+function canFire(obj) {
+	if ((obj.bullets.head == null && ((time - obj.lastShot)/1000 >= obj.rateOfFire / 2)) 
+		|| (time - obj.lastShot)/1000 >= obj.rateOfFire) {
 		return true
 	} else {
 		return false

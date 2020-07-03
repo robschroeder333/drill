@@ -85,6 +85,9 @@ function gameStart() {
 	player.bullets = new Collection()
 	player.lastShot = Date.now()
 
+	enemies = new Collection()
+	enemies.add(new Shooter({x: 400, y: 200}, {x: 15, y: 10}, 1)) //test enemy
+
 	document.addEventListener('keydown', (event) => {
 		switch (event.code) {
 			case 'KeyC':
@@ -143,6 +146,9 @@ function update() {
 	handleInput()
 	player.move()	
 	player.bullets.checkAll()
+
+	enemies.checkAll()
+
 	camera()
 	draw()	
 	window.requestAnimationFrame(update)
@@ -165,7 +171,7 @@ function handleInput() {
 		ver = 0
 	}
 
-	if (iFire && canFire()) {
+	if (iFire && canFire(player)) {
 		player.fire()
 	}
 }
@@ -187,6 +193,7 @@ function draw() {
 	//Draw player's bullets
 	player.bullets.drawAll()
 
+	
 	//Draw level with frustum culling
 	let topRow = Math.clamp(-Math.ceil(level.origin.y / cell.y), 0, levelHeight)
 	let leftCell = Math.clamp(-Math.ceil(level.origin.x / cell.x), 0, levelWidth)
@@ -206,6 +213,7 @@ function draw() {
 			}	
 		}
 	}
+	enemies.drawAll()
 	ctx.clearRect(-topLeftBorder, -topLeftBorder, topLeftBorder, tHeight + topLeftBorder)
 	ctx.clearRect(-topLeftBorder, -topLeftBorder, tWidth + topLeftBorder, topLeftBorder)
 }
