@@ -53,6 +53,7 @@ let player = {
 	},
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
+	health: 3,
 	speed: 500,
 	hSpeed: 50,
 	vSpeed: 50,
@@ -294,10 +295,11 @@ let player = {
 }
 
 class Bullet extends Node{
-	constructor(origin, hSpeed, vSpeed, size = {x:10, y:10}) {
+	constructor(origin, hSpeed, vSpeed, damage = 1, size = {x:10, y:10}) {
 		super()
 		this.origin = origin
 		this.size = size
+		this.damage = damage
 		this.hSpeed = hSpeed
 		this.vSpeed = vSpeed
 	}
@@ -341,14 +343,14 @@ class Bullet extends Node{
 			return
 		}
 
-		//collision with level
+		//collision
 		if (!this.willRemove) {
 			let topLeft = {x: nextX, y: nextY}
 			let bottomLeft = {x: nextX, y: nextY + this.size.y}
 			let bottomRight = {x: nextX + this.size.x, y: nextY + this.size.y}
 			let topRight = {x: nextX + this.size.x, y: nextY}
 			let collision = false
-
+			//with level
 			if (level.rows[Math.floor(topLeft.y / cell.y)][Math.floor(topLeft.x / cell.x)] != null) {
 				level.rows[Math.floor(topLeft.y / cell.y)][Math.floor(topLeft.x / cell.x)] = null
 				collision = true
@@ -365,7 +367,13 @@ class Bullet extends Node{
 				level.rows[Math.floor(topRight.y / cell.y)][Math.floor(topRight.x / cell.x)] = null
 				collision = true
 			}
-			
+			//with player
+			if (isColliding(new CollisionObj(player.origin, {x: player.origin.x + player.size.x, 
+															 y: player.origin.y + player.size.y}), 
+							new CollisionObj(topLeft, bottomRight))) {
+				player.health -= 1
+				collision = true
+			}
 			if (collision) {
 				this.willRemove = true
 			}

@@ -143,6 +143,9 @@ let time = Date.now()
 function update() {
 	delta = (Date.now() - time) / 1000
 	time = Date.now()
+	if (player.health <= 0) {
+		return
+	}
 	handleInput()
 	player.move()	
 	player.bullets.checkAll()
