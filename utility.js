@@ -23,14 +23,11 @@ function canFire(obj) {
 }
 function isColliding(objOne, objTwo) {
 	if (objOne.br.y < objTwo.tl.y || objTwo.br.y < objOne.tl.y) {
-		console.log("y")
 		return false
 	}
 	if (objOne.tl.x > objTwo.br.x || objTwo.tl.x > objOne.br.x) {
-		console.log("x")
 		return false		
 	}
-	console.log("true")
 	return true
 }
 

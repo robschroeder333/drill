@@ -54,6 +54,7 @@ let player = {
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
 	health: 3,
+	color: 'green',
 	speed: 500,
 	hSpeed: 50,
 	vSpeed: 50,
@@ -368,8 +369,9 @@ class Bullet extends Node{
 				collision = true
 			}
 			//with player
-			if (isColliding(new CollisionObj(player.origin, {x: player.origin.x + player.size.x, 
-															 y: player.origin.y + player.size.y}), 
+			let worldPos = player.worldOrigin()
+			if (isColliding(new CollisionObj(worldPos, {x: worldPos.x + player.size.x, 
+												   		y: worldPos.y + player.size.y}), 
 							new CollisionObj(topLeft, bottomRight))) {
 				player.health -= 1
 				collision = true

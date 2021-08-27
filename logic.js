@@ -144,7 +144,8 @@ function update() {
 	delta = (Date.now() - time) / 1000
 	time = Date.now()
 	if (player.health <= 0) {
-		return
+		console.log('You have died')
+		player.color = 'red'
 	}
 	handleInput()
 	player.move()	
@@ -189,7 +190,7 @@ function draw() {
 	//Draw player
 	ctx.save()
 	ctx.translate(player.origin.x, player.origin.y)
-	ctx.fillStyle = 'green'
+	ctx.fillStyle = player.color
 	ctx.fillRect(0, 0, player.size.x, player.size.y)
 	ctx.restore()
 
