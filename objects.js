@@ -263,7 +263,8 @@ let player = {
 						y: (this.origin.y + 5) - level.origin.y
 					},
 					20,
-					0
+					0,
+					true
 				))
 				this.lastShot = Date.now()
 				break
@@ -274,7 +275,8 @@ let player = {
 						y: (this.origin.y + 5) - level.origin.y
 					},
 					-20,
-					0
+					0,
+					true
 				))
 				this.lastShot = Date.now()
 				break
@@ -285,7 +287,8 @@ let player = {
 						y: this.origin.y - 13 - level.origin.y
 					},
 					0,
-					-20
+					-20,
+					true
 				))
 				this.lastShot = Date.now()
 				break
@@ -296,13 +299,14 @@ let player = {
 }
 
 class Bullet extends Node{
-	constructor(origin, hSpeed, vSpeed, damage = 1, size = {x:10, y:10}) {
+	constructor(origin, hSpeed, vSpeed, isPlayer = false, damage = 1, size = {x:10, y:10}) {
 		super()
 		this.origin = origin
 		this.size = size
 		this.damage = damage
 		this.hSpeed = hSpeed
 		this.vSpeed = vSpeed
+		this.isPlayer = isPlayer
 	}
 	check() {		
 		this.move()
@@ -369,12 +373,25 @@ class Bullet extends Node{
 				collision = true
 			}
 			//with player
-			let worldPos = player.worldOrigin()
-			if (isColliding(new CollisionObj(worldPos, {x: worldPos.x + player.size.x, 
-												   		y: worldPos.y + player.size.y}), 
-							new CollisionObj(topLeft, bottomRight))) {
-				player.health -= 1
-				collision = true
+			if (!this.isPlayer) {
+				let worldPos = player.worldOrigin()
+				if (isColliding(new CollisionObj(worldPos, {x: worldPos.x + player.size.x, 
+															y: worldPos.y + player.size.y}), 
+								new CollisionObj(topLeft, bottomRight))) {
+					player.health -= 1
+					collision = true
+				}
+			} else {
+				let e = enemies.head
+				while (e !== null) {
+					if (isColliding(new CollisionObj(e.origin, {x: e.origin.x + e.size.x, 
+																y: e.origin.y + e.size.y}), 
+									new CollisionObj(topLeft, bottomRight))) {
+						e.health -= 1
+						collision = true
+					}
+					e = e.next
+				}
 			}
 			if (collision) {
 				this.willRemove = true
@@ -431,6 +448,11 @@ class Enemy extends Node {
 			return true
 		}
 	}
+	deathCheck() {
+		if (this.health <= 0) {
+			this.remove()
+		}
+	}
 }
 class Shooter extends Enemy {
 	constructor(origin, size, health) {
@@ -475,6 +497,7 @@ class Shooter extends Enemy {
 			}
 			this.bullets.checkAll()
 		}
+		this.deathCheck()
 	}
 	attack() {
 		this.bullets.add(new Bullet(

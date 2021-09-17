@@ -86,7 +86,7 @@ function gameStart() {
 	player.lastShot = Date.now()
 
 	enemies = new Collection()
-	enemies.add(new Shooter({x: 400, y: 200}, {x: 15, y: 10}, 1)) //test enemy
+	enemies.add(new Shooter({x: 400, y: 200}, {x: 15, y: 20}, 1)) //test enemy
 
 	document.addEventListener('keydown', (event) => {
 		switch (event.code) {
