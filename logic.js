@@ -86,7 +86,7 @@ function gameStart() {
 	player.lastShot = Date.now()
 
 	enemies = new Collection()
-	enemies.add(new Shooter({x: 400, y: 200}, {x: 15, y: 10}, 1)) //test enemy
+	enemies.add(new Shooter({x: 400, y: 200}, {x: 15, y: 20}, 1)) //test enemy
 
 	document.addEventListener('keydown', (event) => {
 		switch (event.code) {
@@ -143,6 +143,10 @@ let time = Date.now()
 function update() {
 	delta = (Date.now() - time) / 1000
 	time = Date.now()
+	if (player.health <= 0) {
+		console.log('You have died')
+		player.color = 'red'
+	}
 	handleInput()
 	player.move()	
 	player.bullets.checkAll()
@@ -186,7 +190,7 @@ function draw() {
 	//Draw player
 	ctx.save()
 	ctx.translate(player.origin.x, player.origin.y)
-	ctx.fillStyle = 'green'
+	ctx.fillStyle = player.color
 	ctx.fillRect(0, 0, player.size.x, player.size.y)
 	ctx.restore()
 

@@ -21,7 +21,25 @@ function canFire(obj) {
 		return false
 	}
 }
+function isColliding(objOne, objTwo) {
+	if (objOne.br.y < objTwo.tl.y || objTwo.br.y < objOne.tl.y) {
+		return false
+	}
+	if (objOne.tl.x > objTwo.br.x || objTwo.tl.x > objOne.br.x) {
+		return false		
+	}
+	return true
+}
 
+//Classes
+/////////
+class CollisionObj {
+	//corners
+	constructor(tl, br) {
+		this.tl = tl		
+		this.br = br
+	}
+}
 class Node {
 	constructor() {
 		this.source

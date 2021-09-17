@@ -53,6 +53,8 @@ let player = {
 	},
 	size: {x:20, y:20},
 	velocity: {x:0, y:0},
+	health: 3,
+	color: 'green',
 	speed: 500,
 	hSpeed: 50,
 	vSpeed: 50,
@@ -261,7 +263,8 @@ let player = {
 						y: (this.origin.y + 5) - level.origin.y
 					},
 					20,
-					0
+					0,
+					true
 				))
 				this.lastShot = Date.now()
 				break
@@ -272,7 +275,8 @@ let player = {
 						y: (this.origin.y + 5) - level.origin.y
 					},
 					-20,
-					0
+					0,
+					true
 				))
 				this.lastShot = Date.now()
 				break
@@ -283,7 +287,8 @@ let player = {
 						y: this.origin.y - 13 - level.origin.y
 					},
 					0,
-					-20
+					-20,
+					true
 				))
 				this.lastShot = Date.now()
 				break
@@ -294,12 +299,14 @@ let player = {
 }
 
 class Bullet extends Node{
-	constructor(origin, hSpeed, vSpeed, size = {x:10, y:10}) {
+	constructor(origin, hSpeed, vSpeed, isPlayer = false, damage = 1, size = {x:10, y:10}) {
 		super()
 		this.origin = origin
 		this.size = size
+		this.damage = damage
 		this.hSpeed = hSpeed
 		this.vSpeed = vSpeed
+		this.isPlayer = isPlayer
 	}
 	check() {		
 		this.move()
@@ -341,14 +348,14 @@ class Bullet extends Node{
 			return
 		}
 
-		//collision with level
+		//collision
 		if (!this.willRemove) {
 			let topLeft = {x: nextX, y: nextY}
 			let bottomLeft = {x: nextX, y: nextY + this.size.y}
 			let bottomRight = {x: nextX + this.size.x, y: nextY + this.size.y}
 			let topRight = {x: nextX + this.size.x, y: nextY}
 			let collision = false
-
+			//with level
 			if (level.rows[Math.floor(topLeft.y / cell.y)][Math.floor(topLeft.x / cell.x)] != null) {
 				level.rows[Math.floor(topLeft.y / cell.y)][Math.floor(topLeft.x / cell.x)] = null
 				collision = true
@@ -365,7 +372,27 @@ class Bullet extends Node{
 				level.rows[Math.floor(topRight.y / cell.y)][Math.floor(topRight.x / cell.x)] = null
 				collision = true
 			}
-			
+			//with player
+			if (!this.isPlayer) {
+				let worldPos = player.worldOrigin()
+				if (isColliding(new CollisionObj(worldPos, {x: worldPos.x + player.size.x, 
+															y: worldPos.y + player.size.y}), 
+								new CollisionObj(topLeft, bottomRight))) {
+					player.health -= 1
+					collision = true
+				}
+			} else {
+				let e = enemies.head
+				while (e !== null) {
+					if (isColliding(new CollisionObj(e.origin, {x: e.origin.x + e.size.x, 
+																y: e.origin.y + e.size.y}), 
+									new CollisionObj(topLeft, bottomRight))) {
+						e.health -= 1
+						collision = true
+					}
+					e = e.next
+				}
+			}
 			if (collision) {
 				this.willRemove = true
 			}
@@ -421,6 +448,11 @@ class Enemy extends Node {
 			return true
 		}
 	}
+	deathCheck() {
+		if (this.health <= 0) {
+			this.remove()
+		}
+	}
 }
 class Shooter extends Enemy {
 	constructor(origin, size, health) {
@@ -465,6 +497,7 @@ class Shooter extends Enemy {
 			}
 			this.bullets.checkAll()
 		}
+		this.deathCheck()
 	}
 	attack() {
 		this.bullets.add(new Bullet(
