@@ -69,7 +69,7 @@ let player = {
 	drillStrength: 3,
 	shotDelay: 1,
 	direction: 'right',
-	stun: 
+	stun: 0,
 	//bullets,
 	//lastShot,
 	move: function() {
@@ -271,13 +271,13 @@ let player = {
 			e = e.next
 		}
 		if (collision) {
-			console.log('collision')
+			// console.log('collision')
 			this.health -= 1
 			this.velocity.x *= -3
 			this.velocity.y *= -3
 		}
 
-		console.log(this.velocity.x, ', ', this.velocity.y)
+		// console.log(this.velocity.x, ', ', this.velocity.y)
 		//move player
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
