@@ -69,6 +69,7 @@ let player = {
 	drillStrength: 3,
 	shotDelay: 1,
 	direction: 'right',
+	stun: 
 	//bullets,
 	//lastShot,
 	move: function() {
@@ -138,6 +139,7 @@ let player = {
 		let checkRow
 		let checkBlock
 
+		//level collision
 		//collision right
 		if (this.velocity.x > 0) {
 			nextX = this.origin.x + this.size.x + this.velocity.x
@@ -250,6 +252,33 @@ let player = {
 				}
 			}
 		} 
+
+		//enemy collision
+		let e = enemies.head
+		let world = {x: this.origin.x - level.origin.x,
+					 y: this.origin.y - level.origin.y}
+		let nextPos = new CollisionObj({x: world.x + this.velocity.x, 
+									   y: world.y + this.velocity.y},
+									  {x: world.x + this.velocity.x + this.size.x, 
+									   y: world.y + this.velocity.y + this.size.y})
+		let collision = false
+		while (e !== null) {
+			if (isColliding(new CollisionObj(e.origin, {x: e.origin.x + e.size.x, 
+														y: e.origin.y + e.size.y}), 
+							nextPos)) {
+				collision = true
+			}
+			e = e.next
+		}
+		if (collision) {
+			console.log('collision')
+			this.health -= 1
+			this.velocity.x *= -3
+			this.velocity.y *= -3
+		}
+
+		console.log(this.velocity.x, ', ', this.velocity.y)
+		//move player
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
 	},
