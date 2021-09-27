@@ -67,13 +67,15 @@ let player = {
 	drill: false,
 	drillCount: 3,
 	drillStrength: 3,
-	shotDelay: 1,
+	shotDelay: 1,//seconds
+	hitStunLength: .1,//seconds
 	direction: 'right',
-	stun: 0,
+	isHit: false,
+	//hitStun,
 	//bullets,
 	//lastShot,
 	move: function() {
-
+		//keep track for shot direction
 		if (iRight) {
 			this.direction = 'right'
 		}
@@ -83,8 +85,7 @@ let player = {
 		if (iUp) {
 			this.direction = 'up'
 		}
-
-
+		//drill ability
 		if (!this.isGrounded && iDown && this.drillCount > 0) {
 			this.drill = true
 		} else {
@@ -119,6 +120,13 @@ let player = {
 		this.hSpeed = Math.clamp(this.hSpeed + 20, 10, this.speed)
 		this.vSpeed = Math.clamp(this.vSpeed + 20, 10, this.speed)
 		this.g = Math.clamp(this.g * 2, 100, 1000)
+
+		//disable input during hitstun
+		if (this.hitStun != undefined && !delayCheck(this.hitStun, this.hitStunLength)) {
+			console.log('input disabled')
+			hor = 0
+			ver = 0
+		}
 		
 		//next position (before collision)
 		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.hSpeed)) * delta, -this.hMax, this.hMax)
@@ -261,20 +269,31 @@ let player = {
 									   y: world.y + this.velocity.y},
 									  {x: world.x + this.velocity.x + this.size.x, 
 									   y: world.y + this.velocity.y + this.size.y})
-		let collision = false
+		this.isHit = false
 		while (e !== null) {
 			if (isColliding(new CollisionObj(e.origin, {x: e.origin.x + e.size.x, 
 														y: e.origin.y + e.size.y}), 
 							nextPos)) {
-				collision = true
+				this.isHit = true
 			}
 			e = e.next
 		}
-		if (collision) {
-			// console.log('collision')
-			this.health -= 1
-			this.velocity.x *= -3
-			this.velocity.y *= -3
+		if (this.isHit) {
+			// console.log('hit')
+			if (this.hitstun == undefined || delayCheck(this.hitStun, this.hitStunLength)) {
+				this.hitStun = Date.now()	
+				this.health -= 1
+				if (this.velocity.x < 1 && this.velocity.x > -1) {
+					if (this.velocity.x >= 0) {
+						this.velocity.x += 10
+					} else {
+						this.velocity.x -= 10
+					}
+				}
+				this.velocity.x *= -3
+
+				this.velocity.y *= -2
+			}	
 		}
 
 		// console.log(this.velocity.x, ', ', this.velocity.y)

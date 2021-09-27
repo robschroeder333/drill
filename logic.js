@@ -158,6 +158,7 @@ function update() {
 	window.requestAnimationFrame(update)
 }
 
+//player input
 function handleInput() {
 	if (iLeft) {
 		hor = -1
