@@ -67,6 +67,7 @@ let player = {
 	drill: false,
 	drillCount: 3,
 	drillStrength: 3,
+	drillSpeed: 10,
 	shotDelay: 1,//seconds
 	hitStunLength: .3,//seconds
 	direction: 'right',
@@ -85,7 +86,10 @@ let player = {
 		if (iUp) {
 			this.direction = 'up'
 		}
-		
+
+		if (this.isGrounded) {
+			this.g = 200
+		}
 		//drill ability
 		if (!this.isGrounded && iDown && this.drillCount > 0) {
 			this.drill = true
@@ -120,24 +124,24 @@ let player = {
 
 		this.hSpeed = Math.clamp(this.hSpeed + 20, 10, this.speed)
 		this.vSpeed = Math.clamp(this.vSpeed + 20, 10, this.speed)
-		this.g = Math.clamp(this.g * 2, 100, 1000)
-
+		this.g = Math.clamp(Math.pow(this.g, 1.25), 2, 1000)
+		
 		//disable input during hitstun
 		if (this.hitStun != undefined && !isDelayFinished(this.hitStun, this.hitStunLength)) {
 			console.log('input disabled')
 			hor = 0
 			ver = 0
 		}
-		
+		let vCap = (this.drill) ? this.vMax : this.vMax - this.drillSpeed  
 		//next position (before collision)
 		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.hSpeed)) * delta, -this.hMax, this.hMax)
-		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.vSpeed) + this.g) * delta), -this.vMax, this.vMax) 
+		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.vSpeed) + this.g) * delta), -this.vMax, vCap) 
 		
 		//disable control adjustment when stunned
 		if (this.hitStun == undefined || isDelayFinished(this.hitStun, this.hitStunLength)) {
 
 			//adds responsiveness to controls
-			if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
+			if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) { //never triggering
 				this.velocity.x = 0
 				this.hSpeed = 50
 			}
@@ -151,19 +155,25 @@ let player = {
 		if (this.isHit) {
 			// console.log('hit')
 			if (this.hitstun == undefined || isDelayFinished(this.hitStun, this.hitStunLength)) {
-				this.hitStun = Date.now()	
-				this.health -= 1
-				if (this.velocity.x < 1 && this.velocity.x > -1) {
-					if (this.velocity.x >= 0) {
-						this.velocity.x += 20
+				this.hitStun = Date.now()
+
+				if (!this.drill) {
+					this.health -= 1
+					if (this.velocity.x < 1 && this.velocity.x > -1) {
+						if (this.velocity.x >= 0) {
+							this.velocity.x += 20
+						} else {
+							this.velocity.x -= 20
+						}
 					} else {
-						this.velocity.x -= 20
+						this.velocity.x *= -3
 					}
+					this.velocity.y *= -2
 				} else {
-					this.velocity.x *= -3
+					this.g = 1
+					this.velocity.y *= -3
 				}
 
-				this.velocity.y *= -2
 			}	
 		}
 	
@@ -238,7 +248,6 @@ let player = {
 							this.origin.y = (blockL.origin.y + level.origin.y) - this.size.y
 							this.velocity.y = Math.min(0, this.velocity.y)
 							this.isGrounded = true
-							this.g = 100
 						} else {
 							level.rows[checkRow][Math.floor((left - level.origin.x) / cell.x)] = null
 							drilled = true							
@@ -249,7 +258,6 @@ let player = {
 							this.origin.y = (blockR.origin.y + level.origin.y) - this.size.y
 							this.velocity.y = Math.min(0, this.velocity.y)
 							this.isGrounded = true
-							this.g = 100
 						} else {
 							level.rows[checkRow][Math.floor((right - level.origin.x) / cell.x)] = null
 							drilled = true
@@ -300,10 +308,13 @@ let player = {
 														y: e.origin.y + e.size.y}), 
 							nextPos)) {
 				this.isHit = true
+				if (this.drill) {
+					e.health -= 1
+				}
 			}
 			e = e.next
 		}
-
+		// console.log(this.velocity.y)
 		//move player
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
