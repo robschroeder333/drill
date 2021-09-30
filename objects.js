@@ -85,6 +85,7 @@ let player = {
 		if (iUp) {
 			this.direction = 'up'
 		}
+		
 		//drill ability
 		if (!this.isGrounded && iDown && this.drillCount > 0) {
 			this.drill = true
@@ -132,6 +133,7 @@ let player = {
 		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.hSpeed)) * delta, -this.hMax, this.hMax)
 		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.vSpeed) + this.g) * delta), -this.vMax, this.vMax) 
 		
+		//disable control adjustment when stunned
 		if (this.hitStun == undefined || isDelayFinished(this.hitStun, this.hitStunLength)) {
 
 			//adds responsiveness to controls
@@ -145,6 +147,7 @@ let player = {
 			}
 		}
 
+		//hitstun logic (pushback and damage)
 		if (this.isHit) {
 			// console.log('hit')
 			if (this.hitstun == undefined || isDelayFinished(this.hitStun, this.hitStunLength)) {
@@ -300,15 +303,13 @@ let player = {
 			}
 			e = e.next
 		}
-		
 
-		// console.log(this.velocity.x, ', ', this.velocity.y)
 		//move player
 		this.origin.x += this.velocity.x
 		this.origin.y += this.velocity.y
 	},
 	fire: function() {
-//spawn bullet in origin determined by direction and pass speed params accordingly
+		//spawn bullet in origin determined by direction and pass speed params accordingly
 		switch (this.direction) {
 			case 'right':
 				this.bullets.add(new Bullet(
