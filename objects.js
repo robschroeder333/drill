@@ -68,7 +68,7 @@ let player = {
 	drillCount: 3,
 	drillStrength: 3,
 	shotDelay: 1,//seconds
-	hitStunLength: .1,//seconds
+	hitStunLength: .3,//seconds
 	direction: 'right',
 	isHit: false,
 	//hitStun,
@@ -122,7 +122,7 @@ let player = {
 		this.g = Math.clamp(this.g * 2, 100, 1000)
 
 		//disable input during hitstun
-		if (this.hitStun != undefined && !delayCheck(this.hitStun, this.hitStunLength)) {
+		if (this.hitStun != undefined && !isDelayFinished(this.hitStun, this.hitStunLength)) {
 			console.log('input disabled')
 			hor = 0
 			ver = 0
@@ -132,14 +132,36 @@ let player = {
 		this.velocity.x = Math.clamp((this.velocity.x + (hor  * this.hSpeed)) * delta, -this.hMax, this.hMax)
 		this.velocity.y = Math.clamp(((this.velocity.y + (ver * this.vSpeed) + this.g) * delta), -this.vMax, this.vMax) 
 		
-		//adds responsiveness to controls
-		if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
-			this.velocity.x = 0
-			this.hSpeed = 50
+		if (this.hitStun == undefined || isDelayFinished(this.hitStun, this.hitStunLength)) {
+
+			//adds responsiveness to controls
+			if ((this.velocity.x > 0 && hor < 0) || (this.velocity.x < 0 && hor > 0)) {
+				this.velocity.x = 0
+				this.hSpeed = 50
+			}
+			if (hor === 0 && Math.abs(this.velocity.x) < 0.01) {
+				this.velocity.x = 0
+				this.hSpeed = 50
+			}
 		}
-		if (hor === 0 && Math.abs(this.velocity.x) < 0.01) {
-			this.velocity.x = 0
-			this.hSpeed = 50
+
+		if (this.isHit) {
+			// console.log('hit')
+			if (this.hitstun == undefined || isDelayFinished(this.hitStun, this.hitStunLength)) {
+				this.hitStun = Date.now()	
+				this.health -= 1
+				if (this.velocity.x < 1 && this.velocity.x > -1) {
+					if (this.velocity.x >= 0) {
+						this.velocity.x += 20
+					} else {
+						this.velocity.x -= 20
+					}
+				} else {
+					this.velocity.x *= -3
+				}
+
+				this.velocity.y *= -2
+			}	
 		}
 	
 		let nextX
@@ -278,23 +300,7 @@ let player = {
 			}
 			e = e.next
 		}
-		if (this.isHit) {
-			// console.log('hit')
-			if (this.hitstun == undefined || delayCheck(this.hitStun, this.hitStunLength)) {
-				this.hitStun = Date.now()	
-				this.health -= 1
-				if (this.velocity.x < 1 && this.velocity.x > -1) {
-					if (this.velocity.x >= 0) {
-						this.velocity.x += 10
-					} else {
-						this.velocity.x -= 10
-					}
-				}
-				this.velocity.x *= -3
-
-				this.velocity.y *= -2
-			}	
-		}
+		
 
 		// console.log(this.velocity.x, ', ', this.velocity.y)
 		//move player

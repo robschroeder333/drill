@@ -11,7 +11,7 @@ function drawObject(obj, color) {
 	ctx.fillRect(0, 0, obj.size.x, obj.size.y)
 	ctx.restore()
 }
-function delayCheck(last, delay) {
+function isDelayFinished(last, delay) {
 	if ((time - last)/1000 >= delay) {
 		return true
 	} else {
@@ -19,8 +19,8 @@ function delayCheck(last, delay) {
 	}
 }
 function canFire(obj) {
-	if ((obj.bullets.head == null && delayCheck(obj.lastShot, obj.shotDelay)) 
-		|| delayCheck(obj.lastShot, obj.shotDelay)) {
+	if ((obj.bullets.head == null && isDelayFinished(obj.lastShot, obj.shotDelay / 2)) 
+		|| isDelayFinished(obj.lastShot, obj.shotDelay)) {
 		return true
 	} else {
 		return false
