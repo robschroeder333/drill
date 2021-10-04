@@ -4,7 +4,6 @@
 Math.clamp = function(number, min, max) {
 	return Math.max(min, Math.min(number, max));
 }
-
 function drawObject(obj, color) {
 	ctx.save()
 	ctx.translate(obj.origin.x + level.origin.x, obj.origin.y + level.origin.y)
@@ -12,10 +11,16 @@ function drawObject(obj, color) {
 	ctx.fillRect(0, 0, obj.size.x, obj.size.y)
 	ctx.restore()
 }
-
+function isDelayFinished(last, delay) {
+	if ((time - last)/1000 >= delay) {
+		return true
+	} else {
+		return false
+	}
+}
 function canFire(obj) {
-	if ((obj.bullets.head == null && ((time - obj.lastShot)/1000 >= obj.shotDelay / 2)) 
-		|| (time - obj.lastShot)/1000 >= obj.shotDelay) {
+	if ((obj.bullets.head == null && isDelayFinished(obj.lastShot, obj.shotDelay / 2)) 
+		|| isDelayFinished(obj.lastShot, obj.shotDelay)) {
 		return true
 	} else {
 		return false
